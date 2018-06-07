@@ -25,11 +25,17 @@ public class GeekplayBLE : MonoBehaviour
     string sign1 = null;
     string sign2 = null;
 
-    IEnumerator Start()
+    public void StartSDK()
+    {
+        StartCoroutine(CoStartSDK());
+    }
+    
+    IEnumerator CoStartSDK()
 	{
         DontDestroyOnLoad(gameObject);
 
         //  初始化蓝牙
+        //yield return StartCoroutine(InitBluetooth());
         InitBluetooth();
         yield return new WaitUntil(() => { return (null != mac); });
 
@@ -39,7 +45,7 @@ public class GeekplayBLE : MonoBehaviour
         //  发起验签请求
         string msg = mac + "*" + user_id + "*" + sdk_version + "*" + firmwareVersion + "*" + hardwareVersion + "*" + appid + "*" + appname + "*" + appdescribe;
         yield return StartCoroutine(RequestVerify(serverURL_request, msg));
-        //  反复尝试订阅消息，直到订阅成功
+        //  订阅签名通道
         yield return StartCoroutine(Subscribe());
         //  将 token 转发给硬件
         if (null != token)
@@ -58,24 +64,28 @@ public class GeekplayBLE : MonoBehaviour
         Debug.Log("sign 2: " + sign2);
         yield return StartCoroutine(SendSign(serverURL_verify, str, sign1, sign2));
     }
-
-    public static GeekplayBLE _instance;
-    void Awake()
-    {
-        _instance = this;
-    }
-
+    
     void InitBluetooth()
     {
         Debug.Log("Bluetooth Initializing...");
-        BluetoothLEHardwareInterface.Initialize(true, false, () => 
+        BluetoothLEHardwareInterface.Initialize(true, false, () =>
         {
             Debug.Log("Bluetooth Initialized.");
             Scan("GU-Geekplay");
-        }, (str) => 
+        }, (err) =>
         {
-            Debug.Log("Bluetooth Error: " + str);
+            Debug.Log("Bluetooth Error: " + err);
+            if ("Bluetooth LE Not Enabled" == err)
+            {
+                BluetoothLEHardwareInterface.FinishDeInitialize();
+                BluetoothLEHardwareInterface.DeInitialize(ReInitBluetooth);
+            }
         });
+    }
+
+    void ReInitBluetooth()
+    {
+        Invoke("InitBluetooth", 0.1f);      //  延时为了避免死循环
     }
 
     void Scan(string _targetName)
@@ -101,7 +111,7 @@ public class GeekplayBLE : MonoBehaviour
         }, (address, name) =>
         {
             //  等待 FFC0 服务开启后，就可以进行下一步
-            if (name.Substring(4, 4) == "ffc0")
+            if (name.Substring(4, 4).ToUpper() == "FFC0")
             {
                 mac = _mac;
             }
@@ -231,18 +241,13 @@ public class GeekplayBLE : MonoBehaviour
     IEnumerator Subscribe()
     {
         Debug.Log("Start Subscribe.");
-        bool success = false;
-
-        while (false == success)
+        bool complete = false;
+        BluetoothLEHardwareInterface.SubscribeCharacteristic(mac, "FFC0", "FFC5", (str) => 
         {
-            BluetoothLEHardwareInterface.SubscribeCharacteristic(mac, "FFC0", "FFC5", (str) => 
-            {
-                Debug.Log("Subscribe notification: " + str);
-                success = true;
-            }, ParseSign);
-
-            yield return new WaitForSeconds(0.3f);
-        }
+            Debug.Log("Subscribe notification: " + str);
+            complete = true;
+        }, ParseSign);
+        yield return new WaitUntil(() => complete);
 	}
 
     IEnumerator UnSubscribe()

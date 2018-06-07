@@ -111,9 +111,7 @@ public class BluetoothLEHardwareInterface
 			if (_android != null)
             {
                 _android.Call("androidBluetoothLog", message);
-                //Debug.Log("Bluetooth Log: " + message);
             }
-				
 #endif
 		}
 	}
@@ -130,6 +128,7 @@ public class BluetoothLEHardwareInterface
 			{
 				bluetoothDeviceScript.InitializedAction = action;
 				bluetoothDeviceScript.ErrorAction = errorAction;
+                Debug.Log("bluetoothDeviceScript != null");
 			}
 		}
 		
