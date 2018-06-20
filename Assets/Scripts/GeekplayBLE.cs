@@ -1,18 +1,14 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections;
-using System.Runtime.InteropServices;
-using System;
-using System.Text.RegularExpressions;
-using UnityEngine.SceneManagement;
-using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
 using UnityEngine.Networking;
 
 
 public class GeekplayBLE : MonoBehaviour
 {
-    string serverURL_request = "http://61.188.39.44/cmf/?a=get_sm_msg";
-    string serverURL_verify = "http://61.188.39.44/cmf/?a=velify";
+    string serverURL_request = "http://www.pluginx.cc/?m=sm&a=get_sm_msg";
+    string serverURL_verify = "http://www.pluginx.cc/?m=sm&a=velify";
     string sdk_version = "1.0.0";
     string user_id = "10001";
     string appid = "001";
@@ -35,7 +31,6 @@ public class GeekplayBLE : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         //  初始化蓝牙
-        //yield return StartCoroutine(InitBluetooth());
         InitBluetooth();
         yield return new WaitUntil(() => { return (null != mac); });
 
@@ -58,11 +53,11 @@ public class GeekplayBLE : MonoBehaviour
         //  等待硬件返回签名包
         yield return new WaitUntil(() => { return ((null != sign1) && (null != sign2)); });
         yield return StartCoroutine(UnSubscribe());
-        string str = mac.Replace(":", "") + firmwareVersion.Replace(".", "") + hardwareVersion.Replace(".", "") + token.Substring(0, 40);
-        Debug.Log("str: " + str);
+        string new_token = mac.Replace(":", "") + firmwareVersion.Replace(".", "") + hardwareVersion.Replace(".", "") + token.Substring(0, 40);
+        Debug.Log("str: " + new_token);
         Debug.Log("sign 1: " + sign1);
         Debug.Log("sign 2: " + sign2);
-        yield return StartCoroutine(SendSign(serverURL_verify, str, sign1, sign2));
+        yield return StartCoroutine(SendSign(serverURL_verify, new_token, sign1, sign2,token));
     }
     
     void InitBluetooth()
@@ -85,7 +80,7 @@ public class GeekplayBLE : MonoBehaviour
 
     void ReInitBluetooth()
     {
-        Invoke("InitBluetooth", 0.1f);      //  延时为了避免死循环
+        Invoke("InitBluetooth", 0.5f);      //  延时为了避免死循环
     }
 
     void Scan(string _targetName)
@@ -297,16 +292,17 @@ public class GeekplayBLE : MonoBehaviour
         }
     }
 
-    IEnumerator SendSign(string _url, string _token, string _sign1, string _sign2)
+    IEnumerator SendSign(string _url, string _newtoken, string _sign1, string _sign2, string _oldtoken)
     {
         WWWForm form = new WWWForm();
 
-        //form.AddField("token", _token);
-        //form.AddField("sign1", _sign1);
-        //form.AddField("sign2", _sign2);
-        form.AddField("tk", _token);
-        form.AddField("at1", _sign1);
-        form.AddField("at2", _sign2);
+        form.AddField("newtoken", _newtoken);
+        form.AddField("sign1", _sign1);
+        form.AddField("sign2", _sign2);
+        form.AddField("oldtoken", _oldtoken);
+        //  form.AddField("tk", _token);
+        // form.AddField("at1", _sign1);
+        // form.AddField("at2", _sign2);
         //  TODO: 改为 verify
         using (UnityWebRequest www = UnityWebRequest.Post(_url, form))
         {
