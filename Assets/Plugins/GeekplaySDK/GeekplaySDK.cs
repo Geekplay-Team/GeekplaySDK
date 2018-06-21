@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -37,12 +38,17 @@ public class GeekplaySDK : MonoBehaviour
         return m_arGun;
     }
 
-    public void StartSDK(Action _shootHandler)
+    public void StartSDK(Action _shootHandler, Action _complete = null)
     {
-        StartCoroutine(CoStartSDK(_shootHandler));
+        StartCoroutine(CoStartSDK(_shootHandler, _complete));
+    }
+
+    public void RegisterDevice(Action _complete = null)
+    {
+        StartCoroutine(CoRegisterDevice(_complete));
     }
     
-    IEnumerator CoStartSDK(Action _shootHandler)
+    IEnumerator CoStartSDK(Action _shootHandler, Action _complete)
 	{
         DontDestroyOnLoad(gameObject);
 
@@ -52,17 +58,28 @@ public class GeekplaySDK : MonoBehaviour
         InitBluetooth();
         yield return new WaitUntil(() => { return (null != mac); });
 
+        //  订阅控制通道
+        yield return StartCoroutine(Subscribe("FFF0", "FFF3", Handler_AR_Gun));
+
+        if (null != _complete)
+        {
+            _complete();
+        }
+    }
+
+    IEnumerator CoRegisterDevice(Action _complete)
+    {
         //  读取固件和硬件版本号
         GetHardwareInfoFake(mac);
         yield return new WaitUntil(() => { return ((null != firmwareVersion) && (null != hardwareVersion)); });
         //  发起验签请求
-        string msg = mac + "*" 
-                     + user_id + "*" 
-                     + sdk_version + "*" 
-                     + firmwareVersion + "*" 
-                     + hardwareVersion + "*" 
-                     + appid + "*" 
-                     + appname + "*" 
+        string msg = mac + "*"
+                     + user_id + "*"
+                     + sdk_version + "*"
+                     + firmwareVersion + "*"
+                     + hardwareVersion + "*"
+                     + appid + "*"
+                     + appname + "*"
                      + appdescribe;
         yield return StartCoroutine(RequestVerify(serverURL_request, msg));
         //  订阅签名通道
@@ -82,15 +99,17 @@ public class GeekplaySDK : MonoBehaviour
         Debug.Log("str: " + new_token);
         Debug.Log("sign 1: " + sign1);
         Debug.Log("sign 2: " + sign2);
-        yield return StartCoroutine(SendSign(serverURL_verify, new_token, sign1, sign2,token));
+        yield return StartCoroutine(SendSign(serverURL_verify, new_token, sign1, sign2, token));
 
-        //  订阅控制通道
-        yield return StartCoroutine(Subscribe("FFF0", "FFF3", Handler_AR_Gun));
+        if (null != _complete)
+        {
+            _complete();
+        }
     }
 
     //  AR Gun 的消息处理函数
     bool lastTriggerDown = false;
-    void Handler_AR_Gun(string _channel, byte[] _data)
+    void Handler_AR_Gun(byte[] _data)
     {
         //Debug.Log("Gun Msg: " + BytesToHexString(_data, ":"));
 
@@ -99,7 +118,10 @@ public class GeekplaySDK : MonoBehaviour
             m_arGun.triggerDown = true;
             if (false == lastTriggerDown)
             {
-                ShootHandler();
+                if (null != ShootHandler)
+                {
+                    ShootHandler();
+                }
             }
         }
         else
@@ -127,10 +149,6 @@ public class GeekplaySDK : MonoBehaviour
         {
             m_arGun.joyStickY = (float)(_data[2] - 0x7B) / (0x7B - 0x4D);
         }
-
-        //Debug.Log(m_arGun.triggerDown);
-        //Debug.Log(m_arGun.joyStickX);
-        //Debug.Log(m_arGun.joyStickY);
     }
 
     void InitBluetooth()
@@ -313,29 +331,49 @@ public class GeekplaySDK : MonoBehaviour
 		}
 		return hexString;
 	}
-    
-    IEnumerator Subscribe(string _service, string _channel, Action<string, byte[]> _handler)
+
+#region 订阅 notify 通道
+    Dictionary<string, Action<byte[]>> subscribeHandlers = new Dictionary<string, Action<byte[]>>();
+    void SubscribeHandler(string _channel, byte[] _data)
+    {
+        //  iOS 的通道号为大写，Android 为小写，因此统一为大写处理
+        _channel = _channel.ToUpper().Substring(4, 4);
+        if ((subscribeHandlers.ContainsKey(_channel)) && null != subscribeHandlers[_channel])
+        {
+            subscribeHandlers[_channel](_data);
+        }
+    }
+
+    IEnumerator Subscribe(string _service, string _channel, Action<byte[]> _handler)
     {
         Debug.Log("Start Subscribe.");
+        subscribeHandlers.Add(_channel.ToUpper(), _handler);
         bool complete = false;
         BluetoothLEHardwareInterface.SubscribeCharacteristic(mac, _service, _channel, (str) => 
         {
             Debug.Log("Subscribe notification: " + str);
             complete = true;
-        }, _handler);
+        }, SubscribeHandler);
         yield return new WaitUntil(() => complete);
 	}
-
+    
+    //  TODO: 是否需要修改？
     IEnumerator UnSubscribe(string _service, string _channel)
     {
         bool complete = false;
+        if (subscribeHandlers.ContainsKey(_channel.ToUpper()))
+        {
+            subscribeHandlers.Remove(_channel.ToUpper());
+        }
         BluetoothLEHardwareInterface.UnSubscribeCharacteristic(mac, _service, _channel, (str) => { complete = true; });
         yield return new WaitUntil(() => complete);
     }
 
+#endregion
+
     int signPackCount = 0;
     string signData = "";
-    void ParseSign(string _channel, byte[] _data)
+    void ParseSign(byte[] _data)
     {
         signPackCount++;
         signData += BytesToHexString(_data, "");

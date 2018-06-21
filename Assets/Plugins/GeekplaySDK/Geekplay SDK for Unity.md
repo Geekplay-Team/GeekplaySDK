@@ -55,6 +55,11 @@ email: info@geekplay.cc
 ## API Reference
 
 ```c#
+//	Register the device to Geekplay server
+//	When complete(success or failed), _complete callback will be executed.
+//	Once you start registering, don't call any other SDK APIs until it's completed.
+void RegisterDevice(Action _complete = null);
+
 //	data of AR Gun
 //	triggerDown: true ~ trigger down, false ~ trigger up
 //	joyStickX:   0.0 ~ middle, 1.0 ~ up, -1.0 ~ down
@@ -66,9 +71,8 @@ public class AR_Gun
     public float joyStickY = 0.0f;
 }
 
-//	Start Geekplay SDK
-//	When you pull the trigger, _shootHandler callback will be executed.
-void StartSDK(Action _shootHandler);
+//	Start Geekplay SDK. When initialized, _complete callback will be executed. When you pull the trigger, _shootHandler callback will be executed.
+void StartSDK(Action _shootHandler, Action _complete = null);
 
 //	Get the data of trigger and joystick
 AR_Gun GetGunState();

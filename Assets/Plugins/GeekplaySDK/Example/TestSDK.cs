@@ -14,7 +14,12 @@ public class TestSDK : MonoBehaviour
     void StartSDK()
     {
         sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
-        sdk.StartSDK(Shoot);
+        sdk.StartSDK(Shoot, Register);
+    }
+
+    void Register()
+    {
+        sdk.RegisterDevice();
     }
 
     void Shoot()
