@@ -4,16 +4,27 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
-
-public class GeekplayBLE : MonoBehaviour
+public class AR_Gun
 {
+    public bool triggerDown = false;
+    public float joyStickX = 0.0f;
+    public float joyStickY = 0.0f;
+}
+
+public class GeekplaySDK : MonoBehaviour
+{
+    AR_Gun m_arGun = new AR_Gun();
+    Action ShootHandler;
+    
+    public string m_hardwareName = null;
+    public string user_id = "10001";
+    public string appid = "001";
+    public string appname = "3rdPartyGame";
+    public string appdescribe = "This is just a 3rd party game.";
+
     string serverURL_request = "http://www.pluginx.cc/?m=sm&a=get_sm_msg";
-    string serverURL_verify = "http://www.pluginx.cc/?m=sm&a=velify";
+    string serverURL_verify = "http://www.pluginx.cc/?m=sm&a=velify";       //  改为 verify
     string sdk_version = "1.0.0";
-    string user_id = "10001";
-    string appid = "001";
-    string appname = "3rdPartyGame";
-    string appdescribe = "This is just a 3rd party game.";
     string firmwareVersion = null;
     string hardwareVersion = null;
     string mac = null;
@@ -21,27 +32,41 @@ public class GeekplayBLE : MonoBehaviour
     string sign1 = null;
     string sign2 = null;
 
-    public void StartSDK()
+    public AR_Gun GetGunState()
     {
-        StartCoroutine(CoStartSDK());
+        return m_arGun;
+    }
+
+    public void StartSDK(Action _shootHandler)
+    {
+        StartCoroutine(CoStartSDK(_shootHandler));
     }
     
-    IEnumerator CoStartSDK()
+    IEnumerator CoStartSDK(Action _shootHandler)
 	{
         DontDestroyOnLoad(gameObject);
+
+        ShootHandler = _shootHandler;
 
         //  初始化蓝牙
         InitBluetooth();
         yield return new WaitUntil(() => { return (null != mac); });
 
         //  读取固件和硬件版本号
-        GetHardwareInfo(mac);
+        GetHardwareInfoFake(mac);
         yield return new WaitUntil(() => { return ((null != firmwareVersion) && (null != hardwareVersion)); });
         //  发起验签请求
-        string msg = mac + "*" + user_id + "*" + sdk_version + "*" + firmwareVersion + "*" + hardwareVersion + "*" + appid + "*" + appname + "*" + appdescribe;
+        string msg = mac + "*" 
+                     + user_id + "*" 
+                     + sdk_version + "*" 
+                     + firmwareVersion + "*" 
+                     + hardwareVersion + "*" 
+                     + appid + "*" 
+                     + appname + "*" 
+                     + appdescribe;
         yield return StartCoroutine(RequestVerify(serverURL_request, msg));
         //  订阅签名通道
-        yield return StartCoroutine(Subscribe());
+        yield return StartCoroutine(Subscribe("FFF0", "FFF9", ParseSign));
         //  将 token 转发给硬件
         if (null != token)
         {
@@ -52,21 +77,69 @@ public class GeekplayBLE : MonoBehaviour
         }
         //  等待硬件返回签名包
         yield return new WaitUntil(() => { return ((null != sign1) && (null != sign2)); });
-        yield return StartCoroutine(UnSubscribe());
+        yield return StartCoroutine(UnSubscribe("FFF0", "FFF9"));
         string new_token = mac.Replace(":", "") + firmwareVersion.Replace(".", "") + hardwareVersion.Replace(".", "") + token.Substring(0, 40);
         Debug.Log("str: " + new_token);
         Debug.Log("sign 1: " + sign1);
         Debug.Log("sign 2: " + sign2);
         yield return StartCoroutine(SendSign(serverURL_verify, new_token, sign1, sign2,token));
+
+        //  订阅控制通道
+        yield return StartCoroutine(Subscribe("FFF0", "FFF3", Handler_AR_Gun));
     }
-    
+
+    //  AR Gun 的消息处理函数
+    bool lastTriggerDown = false;
+    void Handler_AR_Gun(string _channel, byte[] _data)
+    {
+        //Debug.Log("Gun Msg: " + BytesToHexString(_data, ":"));
+
+        if (0x01 == _data[0])
+        {
+            m_arGun.triggerDown = true;
+            if (false == lastTriggerDown)
+            {
+                ShootHandler();
+            }
+        }
+        else
+        {
+            m_arGun.triggerDown = false;
+        }
+        lastTriggerDown = m_arGun.triggerDown;
+
+        //  25 - 7A - B0
+        if (_data[3] > 0x7A)
+        {
+            m_arGun.joyStickX = -(float)(_data[3] - 0x7A) / (0xB0 - 0x7A);
+        }
+        else
+        {
+            m_arGun.joyStickX = -(float)(_data[3] - 0x7A) / (0x7A - 0x25);
+        }
+
+        //  4D - 7B - C9
+        if (_data[2] > 0x7B)
+        {
+            m_arGun.joyStickY = (float)(_data[2] - 0x7B) / (0xC9 - 0x7B);
+        }
+        else
+        {
+            m_arGun.joyStickY = (float)(_data[2] - 0x7B) / (0x7B - 0x4D);
+        }
+
+        //Debug.Log(m_arGun.triggerDown);
+        //Debug.Log(m_arGun.joyStickX);
+        //Debug.Log(m_arGun.joyStickY);
+    }
+
     void InitBluetooth()
     {
         Debug.Log("Bluetooth Initializing...");
         BluetoothLEHardwareInterface.Initialize(true, false, () =>
         {
             Debug.Log("Bluetooth Initialized.");
-            Scan("GU-Geekplay");
+            Scan(m_hardwareName);
         }, (err) =>
         {
             Debug.Log("Bluetooth Error: " + err);
@@ -106,7 +179,7 @@ public class GeekplayBLE : MonoBehaviour
         }, (address, name) =>
         {
             //  等待 FFC0 服务开启后，就可以进行下一步
-            if (name.Substring(4, 4).ToUpper() == "FFC0")
+            if (name.Substring(4, 4).ToUpper() == "FFF0")
             {
                 mac = _mac;
             }
@@ -125,6 +198,14 @@ public class GeekplayBLE : MonoBehaviour
             firmwareVersion = GetFirmwareVersion(data);
             hardwareVersion = GetHardwareVersion(data);
         });
+    }
+
+    void GetHardwareInfoFake(string _mac)
+    {
+        Debug.Log("Get hardware info(fake) from: " + _mac);
+
+        firmwareVersion = "00.00.00.01";
+        hardwareVersion = "00.01";
     }
 
     string GetFirmwareVersion(byte[] _data)
@@ -205,9 +286,9 @@ public class GeekplayBLE : MonoBehaviour
 
     void SendToken(byte[] _pack1, byte[] _pack2)
     {
-        BluetoothLEHardwareInterface.WriteCharacteristic(mac, "FFC0", "FFC2", _pack1, _pack1.Length, true, (createAction) =>
+        BluetoothLEHardwareInterface.WriteCharacteristic(mac, "FFF0", "FFF8", _pack1, _pack1.Length, true, (createAction) =>
         {
-            BluetoothLEHardwareInterface.WriteCharacteristic(mac, "FFC0", "FFC2", _pack2, _pack2.Length, true, null);
+            BluetoothLEHardwareInterface.WriteCharacteristic(mac, "FFF0", "FFF8", _pack2, _pack2.Length, true, null);
         });
     }
 
@@ -232,23 +313,23 @@ public class GeekplayBLE : MonoBehaviour
 		}
 		return hexString;
 	}
-
-    IEnumerator Subscribe()
+    
+    IEnumerator Subscribe(string _service, string _channel, Action<string, byte[]> _handler)
     {
         Debug.Log("Start Subscribe.");
         bool complete = false;
-        BluetoothLEHardwareInterface.SubscribeCharacteristic(mac, "FFC0", "FFC5", (str) => 
+        BluetoothLEHardwareInterface.SubscribeCharacteristic(mac, _service, _channel, (str) => 
         {
             Debug.Log("Subscribe notification: " + str);
             complete = true;
-        }, ParseSign);
+        }, _handler);
         yield return new WaitUntil(() => complete);
 	}
 
-    IEnumerator UnSubscribe()
+    IEnumerator UnSubscribe(string _service, string _channel)
     {
         bool complete = false;
-        BluetoothLEHardwareInterface.UnSubscribeCharacteristic(mac, "FFC0", "FFC5", (str) => { complete = true; });
+        BluetoothLEHardwareInterface.UnSubscribeCharacteristic(mac, _service, _channel, (str) => { complete = true; });
         yield return new WaitUntil(() => complete);
     }
 
@@ -300,10 +381,7 @@ public class GeekplayBLE : MonoBehaviour
         form.AddField("sign1", _sign1);
         form.AddField("sign2", _sign2);
         form.AddField("oldtoken", _oldtoken);
-        //  form.AddField("tk", _token);
-        // form.AddField("at1", _sign1);
-        // form.AddField("at2", _sign2);
-        //  TODO: 改为 verify
+        
         using (UnityWebRequest www = UnityWebRequest.Post(_url, form))
         {
             yield return www.SendWebRequest();
