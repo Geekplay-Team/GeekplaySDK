@@ -23,7 +23,7 @@ public class GeekplaySDK : MonoBehaviour
     public string appdescribe = "This is just a 3rd party game.";
 
     string serverURL_request = "http://www.pluginx.cc/?m=sm&a=get_sm_msg";
-    string serverURL_verify = "http://www.pluginx.cc/?m=sm&a=velify";       //  改为 verify
+    string serverURL_verify = "http://www.pluginx.cc/?m=sm&a=verify";
     string sdk_version = "1.0.0";
     string firmwareVersion = null;
     string hardwareVersion = null;
