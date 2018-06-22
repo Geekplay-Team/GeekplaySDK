@@ -6,9 +6,10 @@ This plugin provides basic access to Geekplay AR Gun, ARcher and AR Unit. You ca
 
 ## Version Changes
 
-| Version | Description                               |
-| ------- | ----------------------------------------- |
-| V0.1.0  | Added AR Gun (developer version) support. |
+| Version | Date       | Description                               |
+| ------- | ---------- | ----------------------------------------- |
+| 0.2.0   | 2018-06-22 | Added ARcher (developer version) support. |
+| 0.1.0   | 2018-06-21 | Added AR Gun (developer version) support. |
 
 ## Setup Guide
 
@@ -29,11 +30,6 @@ public class TestSDK : MonoBehaviour
     GeekplaySDK sdk = null;
 
     void Start()
-    {
-        StartSDK();
-    }
-
-    void StartSDK()
     {
         sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
         sdk.StartSDK(Shoot);
@@ -76,7 +72,17 @@ void StartSDK(Action _shootHandler, Action _complete = null);
 
 //	Get the data of trigger and joystick
 AR_Gun GetGunState();
+
+//	data of ARcher
+//	stringPulled: true ~ string pulled, false ~ string released
+//	buttonPressed: true ~ button pressed, false ~ button released
+public class ARcher
+{
+    public bool stringPulled = false;
+    public bool buttonPressed = false;
+}
+
+//	Get the data of string and button
+AR_Gun GetARcherState();
 ```
-
-
 

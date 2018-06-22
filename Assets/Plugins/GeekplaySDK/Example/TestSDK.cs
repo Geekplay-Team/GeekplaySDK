@@ -5,16 +5,25 @@ using UnityEngine;
 public class TestSDK : MonoBehaviour
 {
     GeekplaySDK sdk = null;
+    
+    GeekplayARcher bow = null;
+    GeekplayARGun gun = null;
 
     void Start()
     {
-        StartSDK();
-    }
-
-    void StartSDK()
-    {
         sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
-        sdk.StartSDK(Shoot, Register);
+        sdk.StartSDK();
+        Debug.Log(sdk.GetDevice());
+        if (DeviceName.ARGUN == sdk.m_deviceName)
+        {
+            gun = sdk.GetDevice() as GeekplayARGun;
+            gun.Initialize(GunShoot, Register);
+        }
+        else if (DeviceName.ARCHER == sdk.m_deviceName)
+        {
+            bow = sdk.GetDevice() as GeekplayARcher;
+            bow.Initialize(null, BowShoot, null, null, Register);
+        }
     }
 
     void Register()
@@ -22,10 +31,16 @@ public class TestSDK : MonoBehaviour
         sdk.RegisterDevice();
     }
 
-    void Shoot()
+    void GunShoot()
     {
-        Debug.Log("Shoot: " + Time.time);
-        Debug.Log("X: " + sdk.GetGunState().joyStickX);
-        Debug.Log("Y: " + sdk.GetGunState().joyStickY);
+        Debug.Log("Gun Shoot: " + Time.time);
+        Debug.Log("X: " + gun.GetState().joyStickX);
+        Debug.Log("Y: " + gun.GetState().joyStickY);
+    }
+
+    void BowShoot()
+    {
+        Debug.Log("Bow Shoot: " + Time.time);
+        Debug.Log("Button: " + bow.GetState().buttonPressed);
     }
 }

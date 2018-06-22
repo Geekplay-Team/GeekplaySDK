@@ -5,19 +5,20 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class AR_Gun
+
+
+public enum DeviceName
 {
-    public bool triggerDown = false;
-    public float joyStickX = 0.0f;
-    public float joyStickY = 0.0f;
+    ARGUN = 1, 
+    ARCHER = 2
 }
 
 public class GeekplaySDK : MonoBehaviour
 {
-    AR_Gun m_arGun = new AR_Gun();
-    Action ShootHandler;
+    public DeviceName m_deviceName;
+    GeekplayDevice m_device = null;
     
-    public string m_hardwareName = null;
+    
     public string user_id = "10001";
     public string appid = "001";
     public string appname = "3rdPartyGame";
@@ -28,52 +29,44 @@ public class GeekplaySDK : MonoBehaviour
     string sdk_version = "1.0.0";
     string firmwareVersion = null;
     string hardwareVersion = null;
-    string mac = null;
+
     string token = null;
     string sign1 = null;
     string sign2 = null;
 
-    public AR_Gun GetGunState()
+    public GeekplayDevice GetDevice()
     {
-        return m_arGun;
+        return m_device;
     }
 
-    public void StartSDK(Action _shootHandler, Action _complete = null)
+    public void StartSDK()
     {
-        StartCoroutine(CoStartSDK(_shootHandler, _complete));
+        if (DeviceName.ARGUN == m_deviceName)
+        {
+            m_device = gameObject.AddComponent<GeekplayARGun>();
+        }
+        else if (DeviceName.ARCHER == m_deviceName)
+        {
+            m_device = gameObject.AddComponent<GeekplayARcher>();
+        }
+        else
+        {
+            m_device = null;
+        }
     }
 
     public void RegisterDevice(Action _complete = null)
     {
         StartCoroutine(CoRegisterDevice(_complete));
     }
-    
-    IEnumerator CoStartSDK(Action _shootHandler, Action _complete)
-	{
-        DontDestroyOnLoad(gameObject);
-
-        ShootHandler = _shootHandler;
-
-        //  初始化蓝牙
-        InitBluetooth();
-        yield return new WaitUntil(() => { return (null != mac); });
-
-        //  订阅控制通道
-        yield return StartCoroutine(Subscribe("FFF0", "FFF3", Handler_AR_Gun));
-
-        if (null != _complete)
-        {
-            _complete();
-        }
-    }
 
     IEnumerator CoRegisterDevice(Action _complete)
     {
         //  读取固件和硬件版本号
-        GetHardwareInfoFake(mac);
+        GetHardwareInfoFake(m_device.GetMAC());
         yield return new WaitUntil(() => { return ((null != firmwareVersion) && (null != hardwareVersion)); });
         //  发起验签请求
-        string msg = mac + "*"
+        string msg = m_device.GetMAC() + "*"
                      + user_id + "*"
                      + sdk_version + "*"
                      + firmwareVersion + "*"
@@ -83,7 +76,7 @@ public class GeekplaySDK : MonoBehaviour
                      + appdescribe;
         yield return StartCoroutine(RequestVerify(serverURL_request, msg));
         //  订阅签名通道
-        yield return StartCoroutine(Subscribe("FFF0", "FFF9", ParseSign));
+        yield return StartCoroutine(m_device.Subscribe("FFF0", "FFF9", ParseSign));
         //  将 token 转发给硬件
         if (null != token)
         {
@@ -94,8 +87,8 @@ public class GeekplaySDK : MonoBehaviour
         }
         //  等待硬件返回签名包
         yield return new WaitUntil(() => { return ((null != sign1) && (null != sign2)); });
-        yield return StartCoroutine(UnSubscribe("FFF0", "FFF9"));
-        string new_token = mac.Replace(":", "") + firmwareVersion.Replace(".", "") + hardwareVersion.Replace(".", "") + token.Substring(0, 40);
+        yield return StartCoroutine(m_device.UnSubscribe("FFF0", "FFF9"));
+        string new_token = m_device.GetMAC().Replace(":", "") + firmwareVersion.Replace(".", "") + hardwareVersion.Replace(".", "") + token.Substring(0, 40);
         Debug.Log("str: " + new_token);
         Debug.Log("sign 1: " + sign1);
         Debug.Log("sign 2: " + sign2);
@@ -107,105 +100,7 @@ public class GeekplaySDK : MonoBehaviour
         }
     }
 
-    //  AR Gun 的消息处理函数
-    bool lastTriggerDown = false;
-    void Handler_AR_Gun(byte[] _data)
-    {
-        //Debug.Log("Gun Msg: " + BytesToHexString(_data, ":"));
 
-        if (0x01 == _data[0])
-        {
-            m_arGun.triggerDown = true;
-            if (false == lastTriggerDown)
-            {
-                if (null != ShootHandler)
-                {
-                    ShootHandler();
-                }
-            }
-        }
-        else
-        {
-            m_arGun.triggerDown = false;
-        }
-        lastTriggerDown = m_arGun.triggerDown;
-
-        //  25 - 7A - B0
-        if (_data[3] > 0x7A)
-        {
-            m_arGun.joyStickX = -(float)(_data[3] - 0x7A) / (0xB0 - 0x7A);
-        }
-        else
-        {
-            m_arGun.joyStickX = -(float)(_data[3] - 0x7A) / (0x7A - 0x25);
-        }
-
-        //  4D - 7B - C9
-        if (_data[2] > 0x7B)
-        {
-            m_arGun.joyStickY = (float)(_data[2] - 0x7B) / (0xC9 - 0x7B);
-        }
-        else
-        {
-            m_arGun.joyStickY = (float)(_data[2] - 0x7B) / (0x7B - 0x4D);
-        }
-    }
-
-    void InitBluetooth()
-    {
-        Debug.Log("Bluetooth Initializing...");
-        BluetoothLEHardwareInterface.Initialize(true, false, () =>
-        {
-            Debug.Log("Bluetooth Initialized.");
-            Scan(m_hardwareName);
-        }, (err) =>
-        {
-            Debug.Log("Bluetooth Error: " + err);
-            if ("Bluetooth LE Not Enabled" == err)
-            {
-                BluetoothLEHardwareInterface.FinishDeInitialize();
-                BluetoothLEHardwareInterface.DeInitialize(ReInitBluetooth);
-            }
-        });
-    }
-
-    void ReInitBluetooth()
-    {
-        Invoke("InitBluetooth", 0.5f);      //  延时为了避免死循环
-    }
-
-    void Scan(string _targetName)
-    {
-        Debug.Log("Start scanning...");
-        BluetoothLEHardwareInterface.ScanForPeripheralsWithServices(null, null, (mac, name, rssi, adInfo) =>
-        {
-            Debug.Log("Get Scanned Result.");
-            if (name.Equals(_targetName))
-            {
-                Debug.Log("Found: " + _targetName);
-                BluetoothLEHardwareInterface.StopScan();
-                Connect(mac);
-            }
-        });
-    }
-
-    void Connect(string _mac)
-	{
-        BluetoothLEHardwareInterface.ConnectToPeripheral(_mac, (str) => 
-        {
-            Debug.Log("Connected.");
-        }, (address, name) =>
-        {
-            //  等待 FFC0 服务开启后，就可以进行下一步
-            if (name.Substring(4, 4).ToUpper() == "FFF0")
-            {
-                mac = _mac;
-            }
-        }, null, (str) =>
-        {
-            Debug.Log("Disconnected.");
-        });
-	}
 
     void GetHardwareInfo(string _mac)
     {
@@ -235,7 +130,7 @@ public class GeekplaySDK : MonoBehaviour
             temp[i] = _data[i + 2];
         }
 
-        return BytesToHexString(temp, ".");
+        return GeekplayCommon.BytesToHexString(temp, ".");
     }
 
     string GetHardwareVersion(byte[] _data)
@@ -247,7 +142,7 @@ public class GeekplaySDK : MonoBehaviour
             temp[i] = _data[i + 8];
         }
 
-        return BytesToHexString(temp, ".");
+        return GeekplayCommon.BytesToHexString(temp, ".");
     }
 
     //  将分段后的 token 打包为数据包，准备发送，每段 token 为 10 字节
@@ -304,80 +199,19 @@ public class GeekplaySDK : MonoBehaviour
 
     void SendToken(byte[] _pack1, byte[] _pack2)
     {
-        BluetoothLEHardwareInterface.WriteCharacteristic(mac, "FFF0", "FFF8", _pack1, _pack1.Length, true, (createAction) =>
+        BluetoothLEHardwareInterface.WriteCharacteristic(m_device.GetMAC(), "FFF0", "FFF8", _pack1, _pack1.Length, true, (createAction) =>
         {
-            BluetoothLEHardwareInterface.WriteCharacteristic(mac, "FFF0", "FFF8", _pack2, _pack2.Length, true, null);
+            BluetoothLEHardwareInterface.WriteCharacteristic(m_device.GetMAC(), "FFF0", "FFF8", _pack2, _pack2.Length, true, null);
         });
     }
-
-    string BytesToHexString(byte[] _data, string _splitChar)
-	{
-		string hexString = string.Empty;
-		if (_data != null)
-        {
-			StringBuilder strB = new StringBuilder();
-			for (int i = 0; i < _data.Length; i++)
-            {
-				if (i != _data.Length - 1)
-                {
-					strB.Append (_data [i].ToString ("X2") + _splitChar);
-				}
-                else
-                {
-					strB.Append (_data [i].ToString ("X2"));
-				}
-			}
-			hexString = strB.ToString ();
-		}
-		return hexString;
-	}
-
-#region 订阅 notify 通道
-    Dictionary<string, Action<byte[]>> subscribeHandlers = new Dictionary<string, Action<byte[]>>();
-    void SubscribeHandler(string _channel, byte[] _data)
-    {
-        //  iOS 的通道号为大写，Android 为小写，因此统一为大写处理
-        _channel = _channel.ToUpper().Substring(4, 4);
-        if ((subscribeHandlers.ContainsKey(_channel)) && null != subscribeHandlers[_channel])
-        {
-            subscribeHandlers[_channel](_data);
-        }
-    }
-
-    IEnumerator Subscribe(string _service, string _channel, Action<byte[]> _handler)
-    {
-        Debug.Log("Start Subscribe.");
-        subscribeHandlers.Add(_channel.ToUpper(), _handler);
-        bool complete = false;
-        BluetoothLEHardwareInterface.SubscribeCharacteristic(mac, _service, _channel, (str) => 
-        {
-            Debug.Log("Subscribe notification: " + str);
-            complete = true;
-        }, SubscribeHandler);
-        yield return new WaitUntil(() => complete);
-	}
     
-    //  TODO: 是否需要修改？
-    IEnumerator UnSubscribe(string _service, string _channel)
-    {
-        bool complete = false;
-        if (subscribeHandlers.ContainsKey(_channel.ToUpper()))
-        {
-            subscribeHandlers.Remove(_channel.ToUpper());
-        }
-        BluetoothLEHardwareInterface.UnSubscribeCharacteristic(mac, _service, _channel, (str) => { complete = true; });
-        yield return new WaitUntil(() => complete);
-    }
-
-#endregion
-
     int signPackCount = 0;
     string signData = "";
     void ParseSign(byte[] _data)
     {
         signPackCount++;
-        signData += BytesToHexString(_data, "");
-        Debug.Log("sign Data " + signPackCount + " : " + BytesToHexString(_data, ""));
+        signData += GeekplayCommon.BytesToHexString(_data, "");
+        Debug.Log("sign Data " + signPackCount + " : " + GeekplayCommon.BytesToHexString(_data, ""));
 
         if (4 == signPackCount)
         {
