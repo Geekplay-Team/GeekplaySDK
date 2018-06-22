@@ -45,7 +45,7 @@ public class GeekplayARGun : GeekplayDevice
     bool lastTriggerDown = false;
     void Handler_AR_Gun(byte[] _data)
     {
-        //Debug.Log("Gun Msg: " + BytesToHexString(_data, ":"));
+        //Debug.Log("Gun Msg: " + GeekplayCommon.BytesToHexString(_data, ":"));
 
         if (0x01 == _data[0])
         {
