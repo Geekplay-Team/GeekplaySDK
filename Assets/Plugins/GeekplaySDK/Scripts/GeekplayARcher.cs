@@ -28,27 +28,13 @@ public class GeekplayARcher : GeekplayDevice
         ShootHandler = _shootHandler;
         PressHandler = _pressHandler;
         ReleaseHandler = _releaseHandler;
-        StartCoroutine(CoInitialize(_drawHandler, _shootHandler, _pressHandler, _releaseHandler, _complete));
-    }
-
-    IEnumerator CoInitialize(Action _drawHandler, Action _shootHandler, Action _pressHandler, Action _releaseHandler, Action _complete)
-    {
-        InitBluetooth("GU-ARCHER");
-        yield return new WaitUntil(() => { return (null != m_mac); });
-
-        //  订阅控制通道
-        yield return StartCoroutine(Subscribe("FFF0", "FFF8", Handler_ARcher));
-
-        if (null != _complete)
-        {
-            _complete();
-        }
+        StartCoroutine(CoInitialize("GU-ARCHER", _complete));
     }
 
     //  ARcher 的消息处理函数
     bool lastStringPulled = false;
     bool lastButtonPressed = false;
-    void Handler_ARcher(byte[] _data)
+    protected override void MsgHandler(byte[] _data)
     {
         //Debug.Log("ARcher Msg: " + GeekplayCommon.BytesToHexString(_data, ":"));
         if (0x01 == _data[0])

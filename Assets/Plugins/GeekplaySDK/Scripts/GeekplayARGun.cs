@@ -23,26 +23,12 @@ public class GeekplayARGun : GeekplayDevice
     public void Initialize(Action _shootHandler = null, Action _complete = null)
     {
         GunShootHandler = _shootHandler;
-        StartCoroutine(CoInitialize(_shootHandler, _complete));
-    }
-
-    IEnumerator CoInitialize(Action _shootHandler, Action _complete)
-    {
-        InitBluetooth("GU-ARGUN");
-        yield return new WaitUntil(() => { return (null != m_mac); });
-
-        //  订阅控制通道
-        yield return StartCoroutine(Subscribe("FFF0", "FFF8", Handler_AR_Gun));
-
-        if (null != _complete)
-        {
-            _complete();
-        }
+        StartCoroutine(CoInitialize("GU-ARGUN", _complete));
     }
 
     //  AR Gun 的消息处理函数
     bool lastTriggerDown = false;
-    void Handler_AR_Gun(byte[] _data)
+    protected override void MsgHandler(byte[] _data)
     {
         //Debug.Log("Gun Msg: " + GeekplayCommon.BytesToHexString(_data, ":"));
 

@@ -12,28 +12,17 @@ public class TestSDK : MonoBehaviour
     void Start()
     {
         sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
-        sdk.StartSDK();
-
+        
         if (DeviceName.ARGUN == sdk.m_deviceName)
         {
             gun = sdk.GetDevice() as GeekplayARGun;
-            gun.Initialize(GunShoot, Register);
+            gun.Initialize(GunShoot);
         }
         else if (DeviceName.ARCHER == sdk.m_deviceName)
         {
             bow = sdk.GetDevice() as GeekplayARcher;
-            bow.Initialize(BowDraw, BowShoot, null, null, Verify);
+            bow.Initialize(BowDraw, BowShoot, null, null);
         }
-    }
-
-    void Verify()
-    {
-        sdk.VerifyDevice();
-    }
-
-    void Register()
-    {
-        sdk.RegisterDevice();
     }
 
     void GunShoot()
