@@ -22,8 +22,13 @@ public class TestSDK : MonoBehaviour
         else if (DeviceName.ARCHER == sdk.m_deviceName)
         {
             bow = sdk.GetDevice() as GeekplayARcher;
-            bow.Initialize(BowDraw, BowShoot, null, null, Register);
+            bow.Initialize(BowDraw, BowShoot, null, null, Verify);
         }
+    }
+
+    void Verify()
+    {
+        sdk.VerifyDevice();
     }
 
     void Register()
