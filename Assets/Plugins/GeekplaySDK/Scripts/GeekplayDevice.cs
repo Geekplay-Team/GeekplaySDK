@@ -32,6 +32,7 @@ public class GeekplayDevice : MonoBehaviour
         yield return new WaitUntil(() => isLegal);
         //  订阅控制通道
         yield return StartCoroutine(Subscribe("FFF0", "FFF8", MsgHandler));
+        gameObject.GetComponent<AudioSource>().Play();
 
         if (null != _complete)
         {

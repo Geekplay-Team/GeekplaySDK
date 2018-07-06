@@ -20,7 +20,11 @@ public class GeekplaySDK : MonoBehaviour
     public string m_appID = "001";
     public string m_appName = "3rdPartyGame";
     public string m_appDescription = "This is just a 3rd party game.";
-    
+
+    private void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
 
     public GeekplayDevice GetDevice()
     {
@@ -33,8 +37,6 @@ public class GeekplaySDK : MonoBehaviour
 
     void StartSDK()
     {
-        DontDestroyOnLoad(gameObject);
-
         if (DeviceName.ARGUN == m_deviceName)
         {
             m_device = gameObject.AddComponent<GeekplayARGun>();
