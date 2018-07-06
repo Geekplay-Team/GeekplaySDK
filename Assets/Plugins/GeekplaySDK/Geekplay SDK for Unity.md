@@ -6,10 +6,11 @@ This plugin provides basic access to Geekplay AR Gun, ARcher and AR Unit. You ca
 
 ## Version Changes
 
-| Version | Date       | Description                               |
-| ------- | ---------- | ----------------------------------------- |
-| 0.2.0   | 2018-06-22 | Added ARcher (developer version) support. |
-| 0.1.0   | 2018-06-21 | Added AR Gun (developer version) support. |
+| Version | Date       | Description                                         |
+| ------- | ---------- | --------------------------------------------------- |
+| 0.3.0   | 2018-07-05 | Added local legitimacy verification.                |
+| 0.2.0   | 2018-06-22 | Added ARcher the Hunter(developer version) support. |
+| 0.1.0   | 2018-06-21 | Added AR Gun the Elite(developer version) support.  |
 
 ## Setup Guide
 
@@ -28,30 +29,24 @@ using UnityEngine;
 public class TestSDK : MonoBehaviour
 {
     GeekplaySDK sdk = null;
-    
+
     GeekplayARcher bow = null;
     GeekplayARGun gun = null;
 
     void Start()
     {
         sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
-        sdk.StartSDK();
-
+        
         if (DeviceName.ARGUN == sdk.m_deviceName)
         {
             gun = sdk.GetDevice() as GeekplayARGun;
-            gun.Initialize(GunShoot, Register);
+            gun.Initialize(GunShoot);
         }
         else if (DeviceName.ARCHER == sdk.m_deviceName)
         {
             bow = sdk.GetDevice() as GeekplayARcher;
-            bow.Initialize(BowDraw, BowShoot, null, null, Register);
+            bow.Initialize(BowDraw, BowShoot, null, null);
         }
-    }
-
-    void Register()
-    {
-        sdk.RegisterDevice();
     }
 
     void GunShoot()
@@ -83,13 +78,11 @@ email: info@geekplay.cc
 ### GeekplaySDK : MonoBehaviour
 
 ```c#
-//	Start Geekplay SDK. Call this method before any other Geekplay SDK operations.
-void StartSDK(Action _shootHandler, Action _complete = null);
-
 //	The Enum of device name. Do not edit manually. Select it from the Unity editor.
 DeviceName m_deviceName;
 
 //	Get current device indicated by "m_deviceName". Don't forget to convert the type explicitly. 
+//	Call this method before any other Geekplay APIs.
 GeekplayDevice GetDevice();
 
 //	Register the device to Geekplay server (not necessary)
