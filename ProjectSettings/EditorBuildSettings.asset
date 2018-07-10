@@ -5,9 +5,9 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
-    path: Assets/Plugins/GeekplaySDK/Example/FirstScene.unity
-    guid: 625b90d8ff7966d4da74a312eba87807
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
   - enabled: 1
     path: Assets/Plugins/GeekplaySDK/Example/TestSDK.unity
     guid: 439a11ad928d75546bd22c5a78c4315c

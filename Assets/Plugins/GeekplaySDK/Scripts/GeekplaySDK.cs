@@ -7,8 +7,9 @@ using UnityEngine;
 
 public enum DeviceName
 {
-    ARGUN = 1, 
-    ARCHER = 2
+    AR_Gun = 1, 
+    ARcher = 2, 
+    New_ARcher = 3
 }
 
 public class GeekplaySDK : MonoBehaviour
@@ -37,19 +38,26 @@ public class GeekplaySDK : MonoBehaviour
 
     void StartSDK()
     {
-        if (DeviceName.ARGUN == m_deviceName)
+        if (DeviceName.AR_Gun == m_deviceName)
         {
             m_device = gameObject.AddComponent<GeekplayARGun>();
-            m_device.SetAppInfo(m_userID, m_appID, m_appName, m_appDescription);
         }
-        else if (DeviceName.ARCHER == m_deviceName)
+        else if (DeviceName.ARcher == m_deviceName)
         {
             m_device = gameObject.AddComponent<GeekplayARcher>();
-            m_device.SetAppInfo(m_userID, m_appID, m_appName, m_appDescription);
+        }
+        else if (DeviceName.New_ARcher == m_deviceName)
+        {
+            m_device = gameObject.AddComponent<GeekplayNewARcher>();
         }
         else
         {
             m_device = null;
+        }
+
+        if (null != m_device)
+        {
+            m_device.SetAppInfo(m_userID, m_appID, m_appName, m_appDescription);
         }
     }
 }

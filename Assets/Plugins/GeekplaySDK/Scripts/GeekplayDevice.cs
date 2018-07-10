@@ -117,7 +117,7 @@ public class GeekplayDevice : MonoBehaviour
 
     public IEnumerator Subscribe(string _service, string _channel, Action<byte[]> _handler)
     {
-        Debug.Log("Start Subscribe.");
+        Debug.Log("Start Subscribe Service " + _service + ", Channel " + _channel);
         subscribeHandlers.Add(_channel.ToUpper(), _handler);
         bool complete = false;
         BluetoothLEHardwareInterface.SubscribeCharacteristic(m_mac, _service, _channel, (str) =>
@@ -155,8 +155,7 @@ public class GeekplayDevice : MonoBehaviour
     string token = null;    //  20 bytes 的 token
     string sign1 = null;
     string sign2 = null;
-
-
+    
     public void RegisterDevice(Action _complete = null)
     {
         StartCoroutine(CoRegisterDevice(_complete));

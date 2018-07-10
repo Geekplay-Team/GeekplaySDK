@@ -8,6 +8,7 @@
 
 | 版本  | 日期       | 描述                         |
 | ----- | ---------- | ---------------------------- |
+| 0.4.0 | 2018-07-10 | 兼容新款 ARcher              |
 | 0.3.0 | 2018-07-05 | 新增了合法性验证的功能       |
 | 0.2.0 | 2018-06-22 | 兼容 ARcher（开发者版）      |
 | 0.1.0 | 2018-06-21 | 兼容 AR Gun 精锐（开发者版） |
@@ -30,6 +31,7 @@ public class TestSDK : MonoBehaviour
 {
     GeekplaySDK sdk = null;
 
+    GeekplayNewARcher newBow = null;
     GeekplayARcher bow = null;
     GeekplayARGun gun = null;
 
@@ -37,15 +39,20 @@ public class TestSDK : MonoBehaviour
     {
         sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
         
-        if (DeviceName.ARGUN == sdk.m_deviceName)
+        if (DeviceName.AR_Gun == sdk.m_deviceName)
         {
             gun = sdk.GetDevice() as GeekplayARGun;
             gun.Initialize(GunShoot);
         }
-        else if (DeviceName.ARCHER == sdk.m_deviceName)
+        else if (DeviceName.ARcher == sdk.m_deviceName)
         {
             bow = sdk.GetDevice() as GeekplayARcher;
             bow.Initialize(BowDraw, BowShoot, null, null);
+        }
+        else if (DeviceName.New_ARcher == sdk.m_deviceName)
+        {
+            newBow = sdk.GetDevice() as GeekplayNewARcher;
+            newBow.Initialize(BowDraw, BowShoot);
         }
     }
 
@@ -64,7 +71,6 @@ public class TestSDK : MonoBehaviour
     void BowShoot()
     {
         Debug.Log("Bow Shoot: " + Time.time);
-        Debug.Log("Button: " + bow.GetState().buttonPressed);
     }
 }
 ```

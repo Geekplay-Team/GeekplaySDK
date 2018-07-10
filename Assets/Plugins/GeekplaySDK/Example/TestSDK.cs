@@ -6,6 +6,7 @@ public class TestSDK : MonoBehaviour
 {
     GeekplaySDK sdk = null;
 
+    GeekplayNewARcher newBow = null;
     GeekplayARcher bow = null;
     GeekplayARGun gun = null;
 
@@ -13,15 +14,20 @@ public class TestSDK : MonoBehaviour
     {
         sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
         
-        if (DeviceName.ARGUN == sdk.m_deviceName)
+        if (DeviceName.AR_Gun == sdk.m_deviceName)
         {
             gun = sdk.GetDevice() as GeekplayARGun;
             gun.Initialize(GunShoot);
         }
-        else if (DeviceName.ARCHER == sdk.m_deviceName)
+        else if (DeviceName.ARcher == sdk.m_deviceName)
         {
             bow = sdk.GetDevice() as GeekplayARcher;
             bow.Initialize(BowDraw, BowShoot, null, null);
+        }
+        else if (DeviceName.New_ARcher == sdk.m_deviceName)
+        {
+            newBow = sdk.GetDevice() as GeekplayNewARcher;
+            newBow.Initialize(BowDraw, BowShoot);
         }
     }
 
@@ -40,6 +46,5 @@ public class TestSDK : MonoBehaviour
     void BowShoot()
     {
         Debug.Log("Bow Shoot: " + Time.time);
-        Debug.Log("Button: " + bow.GetState().buttonPressed);
     }
 }
