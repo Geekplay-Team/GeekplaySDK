@@ -41,8 +41,8 @@ public class GeekplayNewARcher : GeekplayDevice
         m_state.drawLength = BitConverter.ToInt16(_data, 11);
         Debug.Log("Draw Length: " + m_state.drawLength);
         //  施密特触发
-        const int lowThreshold = 30;
-        const int highThreshold = 40;
+        const int lowThreshold = 20;
+        const int highThreshold = 30;
 
         if (true == lastStringPulled)
         {
