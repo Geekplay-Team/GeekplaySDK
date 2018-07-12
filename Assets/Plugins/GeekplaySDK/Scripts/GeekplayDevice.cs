@@ -84,11 +84,15 @@ public class GeekplayDevice : MonoBehaviour
         });
     }
 
-    void Connect(string _mac)
+    void Connect(string _mac, Action _complete = null)
     {
         BluetoothLEHardwareInterface.ConnectToPeripheral(_mac, (str) =>
         {
-            Debug.Log("Connected.");
+            Debug.Log("Connected: " + str);
+            if (null != _complete)
+            {
+                _complete();
+            }
         }, (address, name) =>
         {
             //  等待 FFF0 服务开启后，就可以进行下一步
@@ -99,7 +103,7 @@ public class GeekplayDevice : MonoBehaviour
         }, null, (str) =>
         {
             Debug.Log("Reconnecting " + str);
-            Connect(str);
+            Connect(str, () => { StartCoroutine(Subscribe("FFF0", "FFF8", MsgHandler)); });
         });
     }
 
@@ -119,8 +123,18 @@ public class GeekplayDevice : MonoBehaviour
 
     public IEnumerator Subscribe(string _service, string _channel, Action<byte[]> _handler)
     {
+        _channel = _channel.ToUpper();
         Debug.Log("Start Subscribe Service " + _service + ", Channel " + _channel);
-        subscribeHandlers.Add(_channel.ToUpper(), _handler);
+        if (!subscribeHandlers.ContainsKey(_channel))
+        {
+            //  新增
+            subscribeHandlers.Add(_channel, _handler);
+        }
+        else
+        {
+            //  替换
+            subscribeHandlers[_channel] = _handler;
+        }
         bool complete = false;
         BluetoothLEHardwareInterface.SubscribeCharacteristic(m_mac, _service, _channel, (str) =>
         {
