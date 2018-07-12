@@ -55,17 +55,18 @@ public class GeekplayDevice : MonoBehaviour
         }, (err) =>
         {
             Debug.Log("Bluetooth Error: " + err);
-            if ("Bluetooth LE Not Enabled" == err)
-            {
-                BluetoothLEHardwareInterface.FinishDeInitialize();
-                BluetoothLEHardwareInterface.DeInitialize(ReInitBluetooth);
-            }
+        if ("Bluetooth LE Not Enabled" == err)
+        {
+            BluetoothLEHardwareInterface.FinishDeInitialize();
+            BluetoothLEHardwareInterface.DeInitialize(() => { StartCoroutine(ReInitBluetooth(_deviceName)); });
+        }
         });
     }
 
-    void ReInitBluetooth()
+    IEnumerator ReInitBluetooth(string _deviceName)
     {
-        //Invoke("InitBluetooth", 0.5f);      //  延时为了避免死循环
+        yield return new WaitForSeconds(0.5f);  //  延时为了避免死循环
+        InitBluetooth(_deviceName);     
     }
 
     void Scan(string _targetName)
