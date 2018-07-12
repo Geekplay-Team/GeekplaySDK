@@ -22,8 +22,13 @@ public class GeekplayARGun : GeekplayDevice
 
     public void Initialize(Action _shootHandler = null, Action _complete = null)
     {
-        GunShootHandler = _shootHandler;
+        RegisterCallback(_shootHandler);
         StartCoroutine(CoInitialize("GU-ARGUN", _complete));
+    }
+
+    public void RegisterCallback(Action _shootHandler)
+    {
+        GunShootHandler = _shootHandler;
     }
 
     //  AR Gun 的消息处理函数

@@ -132,7 +132,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22127f16704618f46b942d10e27d4b03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_deviceName: 3
+  m_deviceName: 2
   m_userID: 10001
   m_appID: 001
   m_appName: 3rdPartyGame

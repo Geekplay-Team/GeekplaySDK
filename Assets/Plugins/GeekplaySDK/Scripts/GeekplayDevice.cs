@@ -65,7 +65,7 @@ public class GeekplayDevice : MonoBehaviour
 
     void ReInitBluetooth()
     {
-        Invoke("InitBluetooth", 0.5f);      //  延时为了避免死循环
+        //Invoke("InitBluetooth", 0.5f);      //  延时为了避免死循环
     }
 
     void Scan(string _targetName)
@@ -97,7 +97,8 @@ public class GeekplayDevice : MonoBehaviour
             }
         }, null, (str) =>
         {
-            Debug.Log("Disconnected.");
+            Debug.Log("Reconnecting " + str);
+            Connect(str);
         });
     }
 

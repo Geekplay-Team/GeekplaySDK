@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Plugins/GeekplaySDK/Example/AdvancedDemo/AdvancedDemo.unity
-    guid: 2136804bef48d504c9984149d88ce6f0
-  - enabled: 1
     path: Assets/Plugins/GeekplaySDK/Example/TestSDK/TestSDK.unity
     guid: 439a11ad928d75546bd22c5a78c4315c
+  - enabled: 0
+    path: Assets/Plugins/GeekplaySDK/Example/AdvancedDemo/AdvancedDemo.unity
+    guid: 2136804bef48d504c9984149d88ce6f0

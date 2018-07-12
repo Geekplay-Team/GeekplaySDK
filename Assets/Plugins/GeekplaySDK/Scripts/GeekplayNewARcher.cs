@@ -23,9 +23,14 @@ public class GeekplayNewARcher : GeekplayDevice
 
     public void Initialize(Action _drawHandler = null, Action _shootHandler = null, Action _complete = null)
     {
+        RegisterCallback(_drawHandler, _shootHandler);
+        StartCoroutine(CoInitialize("R-ARCHER", _complete));
+    }
+
+    public void RegisterCallback(Action _drawHandler = null, Action _shootHandler = null)
+    {
         DrawHandler = _drawHandler;
         ShootHandler = _shootHandler;
-        StartCoroutine(CoInitialize("R-ARCHER", _complete));
     }
 
     //  New ARcher 的消息处理函数
