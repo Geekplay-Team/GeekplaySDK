@@ -7,6 +7,7 @@ public class NewARcherState
 {
     public bool stringPulled = false;
     public int drawLength = 0;
+    public const float fullDrawLength = 75.0f;
 }
 
 public class GeekplayNewARcher : GeekplayDevice

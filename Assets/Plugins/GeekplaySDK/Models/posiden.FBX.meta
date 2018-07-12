@@ -1,0 +1,145 @@
+fileFormatVersion: 2
+guid: 2ed0616eaeda9bb4184cdffcd3a7c2ae
+timeCreated: 1531298832
+licenseType: Free
+ModelImporter:
+  serializedVersion: 22
+  fileIDToRecycleName:
+    100000: //RootNode
+    100002: posiden_grip
+    100004: posiden_part_01
+    100006: posiden_part_02
+    100008: posiden_part_03
+    100010: posiden_phonehodler_01
+    100012: posiden_phonehodler_02
+    100014: posiden_rocker
+    100016: posiden_trigger_01
+    100018: posiden_trigger_02
+    400000: //RootNode
+    400002: posiden_grip
+    400004: posiden_part_01
+    400006: posiden_part_02
+    400008: posiden_part_03
+    400010: posiden_phonehodler_01
+    400012: posiden_phonehodler_02
+    400014: posiden_rocker
+    400016: posiden_trigger_01
+    400018: posiden_trigger_02
+    2100000: _posidenMTL1
+    2100002: _posidenDEFAULT_MTL
+    2100004: _posidenMTL5
+    2100006: _posidenMTL4
+    2100008: _posidenMTL2
+    2100010: _posidenMTL7
+    2100012: _posidenMTL8
+    2100014: _posidenMTL3
+    2100016: _posidenMTL6
+    2100018: _posidenMTL0
+    2100020: _0-qnu-0DEFAULT_MTL
+    2300000: posiden_grip
+    2300002: posiden_part_01
+    2300004: posiden_part_02
+    2300006: posiden_part_03
+    2300008: posiden_phonehodler_01
+    2300010: posiden_phonehodler_02
+    2300012: posiden_rocker
+    2300014: posiden_trigger_01
+    2300016: posiden_trigger_02
+    3300000: posiden_grip
+    3300002: posiden_part_01
+    3300004: posiden_part_02
+    3300006: posiden_part_03
+    3300008: posiden_phonehodler_01
+    3300010: posiden_phonehodler_02
+    3300012: posiden_rocker
+    3300014: posiden_trigger_01
+    3300016: posiden_trigger_02
+    4300000: posiden_part_01
+    4300002: posiden_part_02
+    4300004: posiden_phonehodler_01
+    4300006: posiden_phonehodler_02
+    4300008: posiden_part_03
+    4300010: posiden_grip
+    4300012: posiden_rocker
+    4300014: posiden_trigger_01
+    4300016: posiden_trigger_02
+  externalObjects: {}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 0.002
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
