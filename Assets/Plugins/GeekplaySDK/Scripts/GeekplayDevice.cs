@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class GeekplayDevice : MonoBehaviour
+public abstract class GeekplayDevice : MonoBehaviour
 {
     protected bool isLegal = false;
     protected string m_mac = null;
@@ -40,15 +40,12 @@ public class GeekplayDevice : MonoBehaviour
         }
     }
 
-    protected virtual void MsgHandler(byte[] _data)
-    {
-        ;
-    }
+    protected abstract void MsgHandler(byte[] _data);
 
     protected void InitBluetooth(string _deviceName)
     {
         Debug.Log("Bluetooth Initializing...");
-        BluetoothLEHardwareInterface.Initialize(true, false, () =>
+        BluetoothDeviceScript receiver = BluetoothLEHardwareInterface.Initialize(true, false, () =>
         {
             Debug.Log("Bluetooth Initialized.");
             Scan(_deviceName);
@@ -61,6 +58,7 @@ public class GeekplayDevice : MonoBehaviour
             BluetoothLEHardwareInterface.DeInitialize(() => { StartCoroutine(ReInitBluetooth(_deviceName)); });
         }
         });
+        DontDestroyOnLoad(receiver.gameObject);
     }
 
     IEnumerator ReInitBluetooth(string _deviceName)
