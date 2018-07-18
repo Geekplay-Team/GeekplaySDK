@@ -35,7 +35,7 @@ extern "C" {
         if (_unityBluetoothLE != nil) {
             
             [_unityBluetoothLE deInitialize];
-            [_unityBluetoothLE release];
+            //[_unityBluetoothLE release];
             _unityBluetoothLE = nil;
             
             UnitySendMessage ("BluetoothLEReceiver", "OnBluetoothMessage", "DeInitialized");
@@ -250,11 +250,11 @@ extern "C" {
             if (message != nil)
             {
                 [message deInitialize];
-                [message release];
+                //[message release];
             }
         }
         
-        [_backgroundMessages release];
+        //[_backgroundMessages release];
         _backgroundMessages = nil;
     }
     
@@ -293,7 +293,7 @@ extern "C" {
                         
                         [message sendUnityMessage];
                         [message deInitialize];
-                        [message release];
+                        //[message release];
                     }
                 }
                 
@@ -1058,8 +1058,8 @@ static char base64EncodingTable[64] =
 
 - (void)deInitialize
 {
-    if (_message != nil)
-        [_message release];
+    //if (_message != nil)
+    //    [_message release];
     _message = nil;
 }
 
