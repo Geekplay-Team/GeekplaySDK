@@ -7,7 +7,8 @@ using UnityEngine.Networking;
 public abstract class GeekplayDevice : MonoBehaviour
 {
     protected bool isLegal = false;
-    protected string m_mac = null;
+    string m_deviceID = null;
+    string m_MAC = null;
 
     string m_userID = null;
     string m_appID = null;
@@ -27,7 +28,7 @@ public abstract class GeekplayDevice : MonoBehaviour
     protected IEnumerator CoInitialize(string _name, Action _complete)
     {
         InitBluetooth(_name);
-        yield return new WaitUntil(() => { return (null != m_mac); });
+        yield return new WaitUntil(() => { return (null != m_deviceID); });
         yield return StartCoroutine(CoVerifyDevice());
         yield return new WaitUntil(() => isLegal);
         //  订阅控制通道
@@ -70,21 +71,27 @@ public abstract class GeekplayDevice : MonoBehaviour
     void Scan(string _targetName)
     {
         Debug.Log("Start scanning...");
-        BluetoothLEHardwareInterface.ScanForPeripheralsWithServices(null, null, (mac, name, rssi, adInfo) =>
+        BluetoothLEHardwareInterface.ScanForPeripheralsWithServices(null, null , (deviceID, name, rssi, adInfo) =>
         {
-            Debug.Log("Get Scanned Result.");
+            //  deviceID:   安卓上是 MAC 地址，iOS 上是某一串不明代码
+            //  adInfo:     广播数据，第 2-7 字节是 MAC 地址
             if (name.Equals(_targetName))
             {
+#if UNITY_IPHONE
+                m_MAC = GeekplayCommon.BytesToHexString(adInfo, "").Substring(4, 12);
+#elif UNITY_ANDROID
+                m_MAC = deviceID.Replace(":", "");
+#endif
                 Debug.Log("Found: " + _targetName);
                 BluetoothLEHardwareInterface.StopScan();
-                Connect(mac);
+                Connect(deviceID);
             }
         });
     }
 
-    void Connect(string _mac, Action _complete = null)
+    void Connect(string _deviceID, Action _complete = null)
     {
-        BluetoothLEHardwareInterface.ConnectToPeripheral(_mac, (str) =>
+        BluetoothLEHardwareInterface.ConnectToPeripheral(_deviceID, (str) =>
         {
             Debug.Log("Connected: " + str);
             if (null != _complete)
@@ -93,10 +100,15 @@ public abstract class GeekplayDevice : MonoBehaviour
             }
         }, (address, name) =>
         {
+#if UNITY_IPHONE
+            string service = name;
+#elif UNITY_ANDROID
+            string service = name.Substring(4, 4).ToUpper();
+#endif
             //  等待 FFF0 服务开启后，就可以进行下一步
-            if (name.Substring(4, 4).ToUpper() == "FFF0")
+            if ("FFF0" == service)
             {
-                m_mac = _mac;
+                m_deviceID = _deviceID;
             }
         }, null, (str) =>
         {
@@ -111,8 +123,10 @@ public abstract class GeekplayDevice : MonoBehaviour
     Dictionary<string, Action<byte[]>> subscribeHandlers = new Dictionary<string, Action<byte[]>>();
     void SubscribeHandler(string _channel, byte[] _data)
     {
+#if UNITY_ANDROID
         //  iOS 的通道号为大写，Android 为小写，因此统一为大写处理
         _channel = _channel.ToUpper().Substring(4, 4);
+#endif
         if ((subscribeHandlers.ContainsKey(_channel)) && null != subscribeHandlers[_channel])
         {
             subscribeHandlers[_channel](_data);
@@ -134,7 +148,7 @@ public abstract class GeekplayDevice : MonoBehaviour
             subscribeHandlers[_channel] = _handler;
         }
         bool complete = false;
-        BluetoothLEHardwareInterface.SubscribeCharacteristic(m_mac, _service, _channel, (str) =>
+        BluetoothLEHardwareInterface.SubscribeCharacteristic(m_deviceID, _service, _channel, (str) =>
         {
             Debug.Log("Subscribe notification: " + str);
             complete = true;
@@ -150,7 +164,7 @@ public abstract class GeekplayDevice : MonoBehaviour
         {
             subscribeHandlers.Remove(_channel.ToUpper());
         }
-        BluetoothLEHardwareInterface.UnSubscribeCharacteristic(m_mac, _service, _channel, (str) => { complete = true; });
+        BluetoothLEHardwareInterface.UnSubscribeCharacteristic(m_deviceID, _service, _channel, (str) => { complete = true; });
         yield return new WaitUntil(() => complete);
     }
     #endregion
@@ -178,10 +192,10 @@ public abstract class GeekplayDevice : MonoBehaviour
     IEnumerator CoRegisterDevice(Action _complete)
     {
         //  读取固件和硬件版本号
-        GetHardwareInfo(m_mac);
+        GetHardwareInfo(m_deviceID);
         yield return new WaitUntil(() => { return ((null != firmwareVersion) && (null != hardwareVersion)); });
         //  发起验签请求
-        string msg = m_mac + "*"
+        string msg = m_MAC + "*"
                      + m_userID + "*"
                      + sdk_version + "*"
                      + firmwareVersion + "*"
@@ -203,7 +217,7 @@ public abstract class GeekplayDevice : MonoBehaviour
         //  等待硬件返回签名包
         yield return new WaitUntil(() => { return ((null != sign1) && (null != sign2)); });
         yield return StartCoroutine(UnSubscribe("FFF0", "FFF9"));
-        string new_token = m_mac.Replace(":", "") + firmwareVersion.Replace(".", "") + hardwareVersion.Replace(".", "") + token.Substring(0, 40);
+        string new_token = m_deviceID.Replace(":", "") + firmwareVersion.Replace(".", "") + hardwareVersion.Replace(".", "") + token.Substring(0, 40);
         Debug.Log("str: " + new_token);
         Debug.Log("sign 1: " + sign1);
         Debug.Log("sign 2: " + sign2);
@@ -213,11 +227,6 @@ public abstract class GeekplayDevice : MonoBehaviour
         {
             _complete();
         }
-    }
-
-    public void VerifyDevice(Action _complete = null)
-    {
-        StartCoroutine(CoVerifyDevice(_complete));
     }
 
     byte[] GenerateTokenPack()
@@ -233,8 +242,10 @@ public abstract class GeekplayDevice : MonoBehaviour
     string signPack = null;
     protected IEnumerator CoVerifyDevice(Action _complete = null)
     {
+        //  TODO: 等待合适的事件
+        yield return new WaitForSeconds(0.5f);
         //  读取固件和硬件版本号
-        GetHardwareInfo(m_mac);
+        GetHardwareInfo(m_deviceID);
         yield return new WaitUntil(() => { return ((null != firmwareVersion) && (null != hardwareVersion)); });
 
         //  订阅签名通道
@@ -250,10 +261,10 @@ public abstract class GeekplayDevice : MonoBehaviour
         Debug.Log("Sign Received.");
         yield return StartCoroutine(UnSubscribe("FFF0", "FFF9"));
         Debug.Log("signPack: " + signPack);
-        string dataToSign = m_mac.Replace(":", "") + firmwareVersion.Replace(".", "") + hardwareVersion.Replace(".", "")
+        string dataToSign = m_MAC + firmwareVersion.Replace(".", "") + hardwareVersion.Replace(".", "")
                             + GeekplayCommon.BytesToHexString(tokenPack1, "").Substring(6, 20)
                             + GeekplayCommon.BytesToHexString(tokenPack2, "").Substring(6, 20);
-        Debug.Log("Dato to sign: " + dataToSign);
+        Debug.Log("Data to sign: " + dataToSign);
 
         if (GeekplayCommon.VerifySign(dataToSign, signPack, pubKeyX, pubKeyY))
         {
@@ -363,9 +374,9 @@ public abstract class GeekplayDevice : MonoBehaviour
 
     void SendToken(byte[] _pack1, byte[] _pack2)
     {
-        BluetoothLEHardwareInterface.WriteCharacteristic(m_mac, "FFF0", "FFFA", _pack1, _pack1.Length, true, (createAction) =>
+        BluetoothLEHardwareInterface.WriteCharacteristic(m_deviceID, "FFF0", "FFFA", _pack1, _pack1.Length, true, (createAction) =>
         {
-            BluetoothLEHardwareInterface.WriteCharacteristic(m_mac, "FFF0", "FFFA", _pack2, _pack2.Length, true, null);
+            BluetoothLEHardwareInterface.WriteCharacteristic(m_deviceID, "FFF0", "FFFA", _pack2, _pack2.Length, true, null);
         });
     }
 
