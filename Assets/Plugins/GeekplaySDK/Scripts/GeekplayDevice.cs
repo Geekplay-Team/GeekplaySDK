@@ -28,7 +28,9 @@ public abstract class GeekplayDevice : MonoBehaviour
     protected IEnumerator CoInitialize(string _name, Action _complete)
     {
         InitBluetooth(_name);
-        yield return new WaitUntil(() => { return (null != m_deviceID); });
+        yield return new WaitUntil(() => null != m_deviceID);
+        //  TODO: 去掉延时
+        yield return new WaitForSeconds(0.5f);
         yield return StartCoroutine(CoVerifyDevice());
         yield return new WaitUntil(() => isLegal);
         //  订阅控制通道
@@ -89,6 +91,8 @@ public abstract class GeekplayDevice : MonoBehaviour
         });
     }
 
+    bool FFF0_enabled = false;
+    bool FFC0_enabled = false;
     void Connect(string _deviceID, Action _complete = null)
     {
         BluetoothLEHardwareInterface.ConnectToPeripheral(_deviceID, (str) =>
@@ -98,21 +102,27 @@ public abstract class GeekplayDevice : MonoBehaviour
             {
                 _complete();
             }
-        }, (address, name) =>
+        }, (address, service) =>
         {
-#if UNITY_IPHONE
-            string service = name;
-#elif UNITY_ANDROID
-            string service = name.Substring(4, 4).ToUpper();
+#if UNITY_ANDROID
+            service = service.Substring(4, 4).ToUpper();
 #endif
-            //  等待 FFF0 服务开启后，就可以进行下一步
+            //  等待所有服务开启后，就可以进行下一步（FFC0 和 FFF0）
             if ("FFF0" == service)
+            {
+                FFF0_enabled = true;
+            }
+            else if ("FFC0" == service)
+            {
+                FFC0_enabled = true;
+            }
+            if (FFC0_enabled && FFF0_enabled)
             {
                 m_deviceID = _deviceID;
             }
         }, null, (str) =>
         {
-            Debug.Log("Reconnecting " + str);
+            Debug.Log("Reconnecting :" + str);
             Connect(str, () => { StartCoroutine(Subscribe("FFF0", "FFF8", MsgHandler)); });
         });
     }
@@ -242,8 +252,6 @@ public abstract class GeekplayDevice : MonoBehaviour
     string signPack = null;
     protected IEnumerator CoVerifyDevice(Action _complete = null)
     {
-        //  TODO: 等待合适的事件
-        yield return new WaitForSeconds(0.5f);
         //  读取固件和硬件版本号
         GetHardwareInfo(m_deviceID);
         yield return new WaitUntil(() => { return ((null != firmwareVersion) && (null != hardwareVersion)); });

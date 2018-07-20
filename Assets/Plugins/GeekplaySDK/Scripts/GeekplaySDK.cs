@@ -14,7 +14,7 @@ public enum DeviceName
 
 public class GeekplaySDK : MonoBehaviour
 {
-    public DeviceName m_deviceName;
+    public DeviceName[] m_deviceName;
     GeekplayDevice m_device = null;
     
     public string m_userID = "10001";
@@ -38,15 +38,15 @@ public class GeekplaySDK : MonoBehaviour
 
     void StartSDK()
     {
-        if (DeviceName.AR_Gun == m_deviceName)
+        if (DeviceName.AR_Gun == m_deviceName[0])
         {
             m_device = gameObject.AddComponent<GeekplayARGun>();
         }
-        else if (DeviceName.ARcher == m_deviceName)
+        else if (DeviceName.ARcher == m_deviceName[0])
         {
             m_device = gameObject.AddComponent<GeekplayARcher>();
         }
-        else if (DeviceName.New_ARcher == m_deviceName)
+        else if (DeviceName.New_ARcher == m_deviceName[0])
         {
             m_device = gameObject.AddComponent<GeekplayNewARcher>();
         }

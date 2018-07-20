@@ -17,7 +17,7 @@ public class AdvancedDemo : MonoBehaviour
     {
         sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
 
-        switch (sdk.m_deviceName)
+        switch (sdk.m_deviceName[0])
         {
             case DeviceName.AR_Gun:
                 gun = sdk.GetDevice() as GeekplayARGun;
@@ -40,7 +40,7 @@ public class AdvancedDemo : MonoBehaviour
 
     void Update()
     {
-        switch (sdk.m_deviceName)
+        switch (sdk.m_deviceName[0])
         {
             case DeviceName.AR_Gun:
                 break;
