@@ -17,30 +17,30 @@ public class AdvancedDemo : MonoBehaviour
     {
         sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
 
-        switch (sdk.m_deviceName[0])
-        {
-            case DeviceName.AR_Gun:
-                gun = sdk.GetDevice() as GeekplayARGun;
-                gun.Initialize(GunShoot);
-                break;
-            case DeviceName.ARcher:
-                bow = sdk.GetDevice() as GeekplayARcher;
-                bow.Initialize(BowDraw, BowShoot, null, null);
-                break;
-            case DeviceName.New_ARcher:
-                newBow = sdk.GetDevice() as GeekplayNewARcher;
-                newBow.Initialize(BowDraw, BowShoot);
-                //  记录拉弦点的初始位置
-                drawOrigin = drawPoint.transform.localPosition;
-                break;
-            default:
-                break;
-        }
+        //switch (sdk.m_supportedDevices[0])
+        //{
+        //    case DeviceName.AR_Gun:
+        //        gun = sdk.GetDevice() as GeekplayARGun;
+        //        gun.Initialize(GunShoot);
+        //        break;
+        //    case DeviceName.ARcher:
+        //        bow = sdk.GetDevice() as GeekplayARcher;
+        //        bow.Initialize(BowDraw, BowShoot, null, null);
+        //        break;
+        //    case DeviceName.New_ARcher:
+        //        newBow = sdk.GetDevice() as GeekplayNewARcher;
+        //        newBow.Initialize(BowDraw, BowShoot);
+        //        //  记录拉弦点的初始位置
+        //        drawOrigin = drawPoint.transform.localPosition;
+        //        break;
+        //    default:
+        //        break;
+        //}
     }
 
     void Update()
     {
-        switch (sdk.m_deviceName[0])
+        switch (sdk.m_supportedDevices[0])
         {
             case DeviceName.AR_Gun:
                 break;

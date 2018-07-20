@@ -24,7 +24,7 @@ public class GeekplayNewARcher : GeekplayDevice
     public void Initialize(Action _drawHandler = null, Action _shootHandler = null, Action _complete = null)
     {
         RegisterCallback(_drawHandler, _shootHandler);
-        StartCoroutine(CoInitialize("R-ARCHER", _complete));
+        StartCoroutine(CoInitialize(m_deviceID, _complete));
     }
 
     public void RegisterCallback(Action _drawHandler = null, Action _shootHandler = null)

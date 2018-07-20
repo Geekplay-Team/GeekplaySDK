@@ -23,7 +23,7 @@ public class GeekplayARGun : GeekplayDevice
     public void Initialize(Action _shootHandler = null, Action _complete = null)
     {
         RegisterCallback(_shootHandler);
-        StartCoroutine(CoInitialize("GU-ARGUN", _complete));
+        StartCoroutine(CoInitialize(m_deviceID, _complete));
     }
 
     public void RegisterCallback(Action _shootHandler)

@@ -7,8 +7,10 @@ using UnityEngine.Networking;
 public abstract class GeekplayDevice : MonoBehaviour
 {
     protected bool isLegal = false;
-    string m_deviceID = null;
-    string m_MAC = null;
+    public string m_deviceID = null;
+    public string m_MAC = null;
+
+    bool connected = false;
 
     string m_userID = null;
     string m_appID = null;
@@ -25,10 +27,10 @@ public abstract class GeekplayDevice : MonoBehaviour
         m_appDescription = _appDescription;
     }
 
-    protected IEnumerator CoInitialize(string _name, Action _complete)
+    protected IEnumerator CoInitialize(string _deviceID, Action _complete)
     {
-        InitBluetooth(_name);
-        yield return new WaitUntil(() => null != m_deviceID);
+        Connect(_deviceID);
+        yield return new WaitUntil(() => connected);
         //  TODO: 去掉延时
         yield return new WaitForSeconds(0.5f);
         yield return StartCoroutine(CoVerifyDevice());
@@ -45,51 +47,6 @@ public abstract class GeekplayDevice : MonoBehaviour
 
     protected abstract void MsgHandler(byte[] _data);
 
-    protected void InitBluetooth(string _deviceName)
-    {
-        Debug.Log("Bluetooth Initializing...");
-        BluetoothDeviceScript receiver = BluetoothLEHardwareInterface.Initialize(true, false, () =>
-        {
-            Debug.Log("Bluetooth Initialized.");
-            Scan(_deviceName);
-        }, (err) =>
-        {
-            Debug.Log("Bluetooth Error: " + err);
-        if ("Bluetooth LE Not Enabled" == err)
-        {
-            BluetoothLEHardwareInterface.FinishDeInitialize();
-            BluetoothLEHardwareInterface.DeInitialize(() => { StartCoroutine(ReInitBluetooth(_deviceName)); });
-        }
-        });
-        DontDestroyOnLoad(receiver.gameObject);
-    }
-
-    IEnumerator ReInitBluetooth(string _deviceName)
-    {
-        yield return new WaitForSeconds(0.5f);  //  延时为了避免死循环
-        InitBluetooth(_deviceName);     
-    }
-
-    void Scan(string _targetName)
-    {
-        Debug.Log("Start scanning...");
-        BluetoothLEHardwareInterface.ScanForPeripheralsWithServices(null, null , (deviceID, name, rssi, adInfo) =>
-        {
-            //  deviceID:   安卓上是 MAC 地址，iOS 上是某一串不明代码
-            //  adInfo:     广播数据，第 2-7 字节是 MAC 地址
-            if (name.Equals(_targetName))
-            {
-#if UNITY_IPHONE
-                m_MAC = GeekplayCommon.BytesToHexString(adInfo, "").Substring(4, 12);
-#elif UNITY_ANDROID
-                m_MAC = deviceID.Replace(":", "");
-#endif
-                Debug.Log("Found: " + _targetName);
-                BluetoothLEHardwareInterface.StopScan();
-                Connect(deviceID);
-            }
-        });
-    }
 
     bool FFF0_enabled = false;
     bool FFC0_enabled = false;
@@ -118,7 +75,7 @@ public abstract class GeekplayDevice : MonoBehaviour
             }
             if (FFC0_enabled && FFF0_enabled)
             {
-                m_deviceID = _deviceID;
+                connected = true;
             }
         }, null, (str) =>
         {

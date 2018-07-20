@@ -4,40 +4,38 @@ using UnityEngine;
 
 public class TestSDK : MonoBehaviour
 {
-    GeekplaySDK sdk = null;
-
-    GeekplayNewARcher newBow = null;
-    GeekplayARcher bow = null;
-    GeekplayARGun gun = null;
-
     void Start()
     {
-        sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
+        GeekplaySDK sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
+        sdk.StartSDK(RegisterCallbacks);
+    }
 
-        switch (sdk.m_deviceName[0])
+    void RegisterCallbacks(GeekplayDevice _device)
+    {
+        Debug.Log(_device.GetType());
+        if (typeof(GeekplayARGun) == _device.GetType())
         {
-            case DeviceName.AR_Gun:
-                gun = sdk.GetDevice() as GeekplayARGun;
-                gun.Initialize(GunShoot);
-                break;
-            case DeviceName.ARcher:
-                bow = sdk.GetDevice() as GeekplayARcher;
-                bow.Initialize(BowDraw, BowShoot, null, null);
-                break;
-            case DeviceName.New_ARcher:
-                newBow = sdk.GetDevice() as GeekplayNewARcher;
-                newBow.Initialize(BowDraw, BowShoot);
-                break;
-            default:
-                break;
+            ((GeekplayARGun)_device).Initialize(GunShoot);
+        }
+        else if (typeof(GeekplayARcher) == _device.GetType())
+        {
+            ((GeekplayARcher)_device).Initialize(BowDraw, BowShoot, null, null);
+        }
+        else if (typeof(GeekplayNewARcher) == _device.GetType())
+        {
+            ((GeekplayNewARcher)_device).Initialize(BowDraw, BowShoot); 
+        }
+        else
+        {
+            //  do nothing
         }
     }
 
     void GunShoot()
     {
         Debug.Log("Gun Shoot: " + Time.time);
-        Debug.Log("X: " + gun.GetState().joyStickX);
-        Debug.Log("Y: " + gun.GetState().joyStickY);
+        //Debug.Log("X: " + gun.GetState().joyStickX);
+        //Debug.Log("Y: " + gun.GetState().joyStickY);
     }
 
     void BowDraw()
