@@ -8,6 +8,7 @@ This plugin provides basic access to Geekplay AR Gun, ARcher and AR Unit. You ca
 
 | Version | Date       | Description                                         |
 | ------- | ---------- | --------------------------------------------------- |
+| 0.5.0   | 2018-07-20 | Added support for scanning multiple devices.        |
 | 0.4.0   | 2018-07-10 | Added new ARcher support.                           |
 | 0.3.0   | 2018-07-05 | Added local legitimacy verification.                |
 | 0.2.0   | 2018-06-22 | Added ARcher the Hunter(developer version) support. |
@@ -29,38 +30,38 @@ using UnityEngine;
 
 public class TestSDK : MonoBehaviour
 {
-    GeekplaySDK sdk = null;
-
-    GeekplayNewARcher newBow = null;
-    GeekplayARcher bow = null;
-    GeekplayARGun gun = null;
-
     void Start()
     {
-        sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
-        
-        if (DeviceName.AR_Gun == sdk.m_deviceName)
+        GeekplaySDK sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
+        sdk.StartSDK(RegisterCallbacks);
+    }
+
+    void RegisterCallbacks(GeekplayDevice _device)
+    {
+        Debug.Log(_device.GetType());
+        if (typeof(GeekplayARGun) == _device.GetType())
         {
-            gun = sdk.GetDevice() as GeekplayARGun;
-            gun.Initialize(GunShoot);
+            ((GeekplayARGun)_device).Initialize(GunShoot);
         }
-        else if (DeviceName.ARcher == sdk.m_deviceName)
+        else if (typeof(GeekplayARcher) == _device.GetType())
         {
-            bow = sdk.GetDevice() as GeekplayARcher;
-            bow.Initialize(BowDraw, BowShoot, null, null);
+            ((GeekplayARcher)_device).Initialize(BowDraw, BowShoot, null, null);
         }
-        else if (DeviceName.New_ARcher == sdk.m_deviceName)
+        else if (typeof(GeekplayNewARcher) == _device.GetType())
         {
-            newBow = sdk.GetDevice() as GeekplayNewARcher;
-            newBow.Initialize(BowDraw, BowShoot);
+            ((GeekplayNewARcher)_device).Initialize(BowDraw, BowShoot); 
+        }
+        else
+        {
+            //  do nothing
         }
     }
 
     void GunShoot()
     {
         Debug.Log("Gun Shoot: " + Time.time);
-        Debug.Log("X: " + gun.GetState().joyStickX);
-        Debug.Log("Y: " + gun.GetState().joyStickY);
+        //Debug.Log("X: " + gun.GetState().joyStickX);
+        //Debug.Log("Y: " + gun.GetState().joyStickY);
     }
 
     void BowDraw()
@@ -87,14 +88,11 @@ email: info@geekplay.cc
 //	The Enum of device name. Do not edit manually. Select it from the Unity editor.
 DeviceName m_deviceName;
 
-//	Get current device indicated by "m_deviceName". Don't forget to convert the type explicitly. 
-//	Call this method before any other Geekplay APIs.
-GeekplayDevice GetDevice();
+//	Definition of the complete callback of StartSDK.
+delegate void RegisterCallback(GeekplayDevice _device);
 
-//	Register the device to Geekplay server (not necessary)
-//	When complete(success or failed), _complete callback will be executed.
-//	Once you start registering, don't call any other SDK APIs until it's completed.
-void RegisterDevice(Action _complete = null);
+//	Start Geekplay SDK. When complete, _register callback will be executed. You can initialize the device and register your own callbacks in "_register" callback. 
+void StartSDK(RegisterCallback _register);
 ```
 
 ### GeekplayARGun : GeekplayDevice
@@ -108,7 +106,7 @@ void Initialize(Action _shootHandler = null, Action _complete = null);
 //	triggerDown: true ~ trigger down, false ~ trigger up
 //	joyStickX:   0.0 ~ middle, 1.0 ~ up, -1.0 ~ down
 //	joyStickY:   0.0 ~ middle, 1.0 ~ right, -1.0 ~ left
-public class AR_Gun
+class AR_Gun
 {
     public bool triggerDown = false;
     public float joyStickX = 0.0f;
@@ -122,23 +120,47 @@ ARGunState GetState();
 ### GeekplayARcher : GeekplayDevice
 
 ```c#
-//	Initialize ARcher. When initialized, _complete callback will be executed. 
+//	Initialize ARcher the Hunter. When initialized, _complete callback will be executed. 
 //	When you draw the bow, _drawHandler callback will be executed.
 //	When you shoot, _shootHandler callback will be executed.
 //	When you press the side button, _pressHandler callback will be executed.
 //	When you release the button, _releaseHandler callback will be executed.
 void Initialize(Action _drawHandler = null, Action _shootHandler = null, Action _pressHandler = null, Action _releaseHandler = null, Action _complete = null);
 
-//	data of ARcher
+//	data of ARcher the Hunter
 //	stringPulled:  true ~ string pulled, false ~ string released
 //	buttonPressed: true ~ button pressed, false ~ button released
-public class ARcher
+class ARcher
 {
     public bool stringPulled = false;
     public bool buttonPressed = false;
 }
 
 //	Get the data of string and button
+ARcherState GetState();
+```
+
+### GeekplayNewARcher : GeekplayDevice
+
+```c#
+//	Initialize ARcher the Dragonbone. When initialized, _complete callback will be executed.
+//	When you draw the bow, _drawHandler callback will be executed.
+//	When you shoot, _shootHandler callback will be executed.
+void Initialize(Action _drawHandler = null, Action _shootHandler = null, Action _complete = null);
+
+//	data of ARcher the Dragonbone
+//	stringPulled:   true ~ string pulled, false ~ string released
+//	drawLength:	    current draw length
+//	fullDrawLength: full draw length of a normal adult
+
+class NewARcherState
+{
+    public bool stringPulled = false;
+    public int drawLength = 0;
+    public const float fullDrawLength = 75.0f;
+}
+
+//	Get the data of the bow
 ARcherState GetState();
 ```
 
