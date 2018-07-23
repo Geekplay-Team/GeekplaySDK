@@ -29,19 +29,21 @@ public abstract class GeekplayDevice : MonoBehaviour
 
     protected IEnumerator CoInitialize(string _deviceID, Action _complete)
     {
-        Connect(_deviceID);
-        yield return new WaitUntil(() => connected);
-        //  TODO: 去掉延时
-        yield return new WaitForSeconds(0.5f);
-        yield return StartCoroutine(CoVerifyDevice());
-        yield return new WaitUntil(() => isLegal);
-        //  订阅控制通道
-        yield return StartCoroutine(Subscribe("FFF0", "FFF8", MsgHandler));
-        gameObject.GetComponent<AudioSource>().Play();
-
-        if (null != _complete)
+        //  若多次调用，则只执行一次
+        if (!connected)
         {
-            _complete();
+            Connect(_deviceID);
+            yield return new WaitUntil(() => connected);
+            yield return StartCoroutine(CoVerifyDevice());
+            yield return new WaitUntil(() => isLegal);
+            //  订阅控制通道
+            yield return StartCoroutine(Subscribe("FFF0", "FFF8", MsgHandler));
+            gameObject.GetComponent<AudioSource>().Play();
+
+            if (null != _complete)
+            {
+                _complete();
+            }
         }
     }
 
@@ -80,6 +82,7 @@ public abstract class GeekplayDevice : MonoBehaviour
         }, null, (str) =>
         {
             Debug.Log("Reconnecting :" + str);
+            connected = false;
             Connect(str, () => { StartCoroutine(Subscribe("FFF0", "FFF8", MsgHandler)); });
         });
     }
@@ -102,6 +105,8 @@ public abstract class GeekplayDevice : MonoBehaviour
 
     public IEnumerator Subscribe(string _service, string _channel, Action<byte[]> _handler)
     {
+        //  TODO: 去掉延时，改为等待某个特定事件
+        yield return new WaitForSeconds(0.5f);
         _channel = _channel.ToUpper();
         Debug.Log("Start Subscribe Service " + _service + ", Channel " + _channel);
         if (!subscribeHandlers.ContainsKey(_channel))

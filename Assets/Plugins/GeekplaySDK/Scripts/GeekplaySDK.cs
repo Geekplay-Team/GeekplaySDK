@@ -33,11 +33,6 @@ public class GeekplaySDK : MonoBehaviour
     public string m_appName = "3rdPartyGame";
     public string m_appDescription = "This is just a 3rd party game.";
 
-    private void Awake()
-    {
-        DontDestroyOnLoad(gameObject);
-    }
-
     public GeekplayDevice GetDevice()
     {
         return m_device;
@@ -47,7 +42,16 @@ public class GeekplaySDK : MonoBehaviour
 
     public void StartSDK(RegisterCallback _register)
     {
-        StartCoroutine(CoStartSDK(_register));
+        if (null == m_device)
+        {
+            DontDestroyOnLoad(gameObject);
+            StartCoroutine(CoStartSDK(_register));
+        }
+        else
+        {
+            //  多次调用，则只是重新注册回调函数
+            _register(m_device);
+        }
     }
 
     IEnumerator CoStartSDK(RegisterCallback _register)
