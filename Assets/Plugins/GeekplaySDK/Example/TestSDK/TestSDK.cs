@@ -13,17 +13,21 @@ public class TestSDK : MonoBehaviour
     void RegisterCallbacks(GeekplayDevice _device)
     {
         Debug.Log(_device.GetType());
-        if (typeof(GeekplayARGun) == _device.GetType())
+        if (typeof(GeekplayElite) == _device.GetType())
         {
-            ((GeekplayARGun)_device).Initialize(GunShoot);
+            ((GeekplayElite)_device).Initialize(GunShoot);
         }
-        else if (typeof(GeekplayARcher) == _device.GetType())
+        else if (typeof(GeekplayPoseidon) == _device.GetType())
         {
-            ((GeekplayARcher)_device).Initialize(BowDraw, BowShoot, null, null);
+            ((GeekplayPoseidon)_device).Initialize(GunShoot);
         }
-        else if (typeof(GeekplayNewARcher) == _device.GetType())
+        else if (typeof(GeekplayHunter) == _device.GetType())
         {
-            ((GeekplayNewARcher)_device).Initialize(BowDraw, BowShoot); 
+            ((GeekplayHunter)_device).Initialize(BowDraw, BowShoot, null, null);
+        }
+        else if (typeof(GeekplayDragonbone) == _device.GetType())
+        {
+            ((GeekplayDragonbone)_device).Initialize(BowDraw, BowShoot); 
         }
         else
         {

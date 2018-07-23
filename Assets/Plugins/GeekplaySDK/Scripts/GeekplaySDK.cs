@@ -8,9 +8,10 @@ using System.Reflection;
 
 public enum DeviceName
 {
-    AR_Gun = 1, 
-    ARcher = 2, 
-    New_ARcher = 3
+    Elite, 
+    Poseidon, 
+    Hunter, 
+    Dragonbone
 }
 
 public class GeekplaySDK : MonoBehaviour
@@ -18,9 +19,10 @@ public class GeekplaySDK : MonoBehaviour
     //  设备类型与蓝牙名字的对应表
     static Dictionary<DeviceName, string[]> m_deviceNames = new Dictionary<DeviceName, string[]>
     {
-        { DeviceName.AR_Gun, new string[]{ "GU-ARGUN" } },
-        { DeviceName.ARcher, new string[]{ "GU-ARCHER" } },
-        { DeviceName.New_ARcher, new string[]{ "R-ARCHER" } },
+        { DeviceName.Elite, new string[]{ "GU-ARGUN" } },
+        { DeviceName.Poseidon, new string[] { "GU-AHEAD" } }, 
+        { DeviceName.Hunter, new string[]{ "GU-ARCHER" } },
+        { DeviceName.Dragonbone, new string[]{ "R-ARCHER" } },
     };
 
     public DeviceName[] m_supportedDevices;
@@ -34,6 +36,11 @@ public class GeekplaySDK : MonoBehaviour
     private void Awake()
     {
         DontDestroyOnLoad(gameObject);
+    }
+
+    public GeekplayDevice GetDevice()
+    {
+        return m_device;
     }
 
     public delegate void RegisterCallback(GeekplayDevice _device);
@@ -116,12 +123,14 @@ public class GeekplaySDK : MonoBehaviour
     {
         switch (_deviceName)
         {
-            case DeviceName.AR_Gun:
-                return gameObject.AddComponent<GeekplayARGun>();
-            case DeviceName.ARcher:
-                return gameObject.AddComponent<GeekplayARcher>();
-            case DeviceName.New_ARcher:
-                return gameObject.AddComponent<GeekplayNewARcher>();
+            case DeviceName.Elite:
+                return gameObject.AddComponent<GeekplayElite>();
+            case DeviceName.Poseidon:
+                return gameObject.AddComponent<GeekplayPoseidon>();
+            case DeviceName.Hunter:
+                return gameObject.AddComponent<GeekplayHunter>();
+            case DeviceName.Dragonbone:
+                return gameObject.AddComponent<GeekplayDragonbone>();
             default:
                 return gameObject.AddComponent<GeekplayDevice>();
         }

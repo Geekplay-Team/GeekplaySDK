@@ -6,9 +6,9 @@ public class AdvancedDemo : MonoBehaviour
 {
     GeekplaySDK sdk = null;
 
-    GeekplayNewARcher newBow = null;
-    GeekplayARcher bow = null;
-    GeekplayARGun gun = null;
+    GeekplayDragonbone newBow = null;
+    GeekplayHunter bow = null;
+    GeekplayElite gun = null;
 
     public GameObject drawPoint;
     Vector3 drawOrigin;
@@ -42,12 +42,12 @@ public class AdvancedDemo : MonoBehaviour
     {
         switch (sdk.m_supportedDevices[0])
         {
-            case DeviceName.AR_Gun:
+            case DeviceName.Elite:
                 break;
-            case DeviceName.ARcher:
+            case DeviceName.Hunter:
                 break;
-            case DeviceName.New_ARcher:
-                float drawLength = newBow.GetState().drawLength / NewARcherState.fullDrawLength;
+            case DeviceName.Dragonbone:
+                float drawLength = newBow.GetState().drawLength / DragonboneState.fullDrawLength;
                 drawPoint.transform.localPosition = drawOrigin + new Vector3(drawLength, 0, 0);
                 break;
             default:
