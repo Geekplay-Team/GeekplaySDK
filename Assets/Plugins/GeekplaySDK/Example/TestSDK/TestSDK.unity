@@ -296,7 +296,7 @@ Prefab:
     - target: {fileID: 114230877288963746, guid: fd39664536f929a468998efe5bbd6a04,
         type: 2}
       propertyPath: m_supportedDevices.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4450891267545836, guid: fd39664536f929a468998efe5bbd6a04, type: 2}
       propertyPath: m_LocalPosition.x

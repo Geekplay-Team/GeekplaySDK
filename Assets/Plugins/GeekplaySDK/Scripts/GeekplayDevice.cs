@@ -91,7 +91,7 @@ public abstract class GeekplayDevice : MonoBehaviour
 
     #region 订阅 notify 通道
     Dictionary<string, Action<byte[]>> subscribeHandlers = new Dictionary<string, Action<byte[]>>();
-    void SubscribeHandler(string _channel, byte[] _data)
+    void SubscribeHandler(string _deviceID, string _channel, byte[] _data)
     {
 #if UNITY_ANDROID
         //  iOS 的通道号为大写，Android 为小写，因此统一为大写处理
@@ -120,9 +120,9 @@ public abstract class GeekplayDevice : MonoBehaviour
             subscribeHandlers[_channel] = _handler;
         }
         bool complete = false;
-        BluetoothLEHardwareInterface.SubscribeCharacteristic(m_deviceID, _service, _channel, (str) =>
+        BluetoothLEHardwareInterface.SubscribeCharacteristicWithDeviceAddress(m_deviceID, _service, _channel, (_deviceID, _characteristic) =>
         {
-            Debug.Log("Subscribe notification: " + str);
+            Debug.Log("Subscribe " + _characteristic + " of " + _deviceID);
             complete = true;
         }, SubscribeHandler);
         yield return new WaitUntil(() => complete);
@@ -257,10 +257,18 @@ public abstract class GeekplayDevice : MonoBehaviour
     {
         Debug.Log("Get hardware info from: " + _mac);
 
-        BluetoothLEHardwareInterface.ReadCharacteristic(_mac, "FFC0", "FFC4", (Test04, data) =>
+        BluetoothLEHardwareInterface.ReadCharacteristic(_mac, "FFC0", "FFC4", (_channel, _data) =>
         {
-            firmwareVersion = GetFirmwareVersion(data);
-            hardwareVersion = GetHardwareVersion(data);
+#if UNITY_ANDROID
+            _channel = _channel.Substring(4, 4).ToUpper();
+#endif
+            if ("FFC4" == _channel)
+            {
+                firmwareVersion = GetFirmwareVersion(_data);
+                hardwareVersion = GetHardwareVersion(_data);
+                Debug.Log("Firmware Version: " + firmwareVersion);
+                Debug.Log("Hardware Version: " + hardwareVersion);
+            }
         });
     }
 
