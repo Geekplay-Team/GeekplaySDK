@@ -37,7 +37,7 @@ public abstract class GeekplayDevice : MonoBehaviour
             yield return StartCoroutine(CoVerifyDevice());
             yield return new WaitUntil(() => isLegal);
             //  订阅控制通道
-            yield return StartCoroutine(Subscribe("FFF0", "FFF8", MsgHandler));
+            yield return StartCoroutine(Subscribe(m_deviceID, "FFF0", "FFF8", MsgHandler));
             gameObject.GetComponent<AudioSource>().Play();
 
             if (null != _complete)
@@ -83,7 +83,7 @@ public abstract class GeekplayDevice : MonoBehaviour
         {
             Debug.Log("Reconnecting :" + str);
             connected = false;
-            Connect(str, () => { StartCoroutine(Subscribe("FFF0", "FFF8", MsgHandler)); });
+            Connect(str, () => { StartCoroutine(Subscribe(m_deviceID, "FFF0", "FFF8", MsgHandler)); });
         });
     }
 
@@ -103,7 +103,7 @@ public abstract class GeekplayDevice : MonoBehaviour
         }
     }
 
-    public IEnumerator Subscribe(string _service, string _channel, Action<byte[]> _handler)
+    public IEnumerator Subscribe(string _deviceID, string _service, string _channel, Action<byte[]> _handler)
     {
         //  TODO: 去掉延时，改为等待某个特定事件
         yield return new WaitForSeconds(0.5f);
@@ -120,9 +120,9 @@ public abstract class GeekplayDevice : MonoBehaviour
             subscribeHandlers[_channel] = _handler;
         }
         bool complete = false;
-        BluetoothLEHardwareInterface.SubscribeCharacteristicWithDeviceAddress(m_deviceID, _service, _channel, (_deviceID, _characteristic) =>
+        BluetoothLEHardwareInterface.SubscribeCharacteristicWithDeviceAddress(_deviceID, _service, _channel, (deviceID, characteristic) =>
         {
-            Debug.Log("Subscribe " + _characteristic + " of " + _deviceID);
+            Debug.Log("Subscribe " + characteristic + " of " + deviceID);
             complete = true;
         }, SubscribeHandler);
         yield return new WaitUntil(() => complete);
@@ -177,7 +177,7 @@ public abstract class GeekplayDevice : MonoBehaviour
                      + m_appDescription;
         yield return StartCoroutine(RequestVerify(serverURL_request, msg));
         //  订阅签名通道
-        yield return StartCoroutine(Subscribe("FFF0", "FFF9", ParseSign4Remote));
+        yield return StartCoroutine(Subscribe(m_deviceID, "FFF0", "FFF9", ParseSign4Remote));
         //  将 token 转发给硬件
         if (null != token)
         {
@@ -219,7 +219,7 @@ public abstract class GeekplayDevice : MonoBehaviour
         yield return new WaitUntil(() => { return ((null != firmwareVersion) && (null != hardwareVersion)); });
 
         //  订阅签名通道
-        yield return StartCoroutine(Subscribe("FFF0", "FFF9", ParseSign4Local));
+        yield return StartCoroutine(Subscribe(m_deviceID, "FFF0", "FFF9", ParseSign4Local));
 
         //  将 token 发给硬件
         byte[] tokenPack1 = GenerateTokenPack();
