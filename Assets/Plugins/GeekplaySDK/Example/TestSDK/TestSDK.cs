@@ -23,7 +23,7 @@ public class TestSDK : MonoBehaviour
         }
         else if (typeof(GeekplayHunter) == _device.GetType())
         {
-            ((GeekplayHunter)_device).Initialize(BowDraw, BowShoot, null, null);
+            ((GeekplayHunter)_device).Initialize(BowDraw, BowShoot, ButtonPressed, ButtonReleased);
         }
         else if (typeof(GeekplayDragonbone) == _device.GetType())
         {
@@ -50,5 +50,15 @@ public class TestSDK : MonoBehaviour
     void BowShoot()
     {
         Debug.Log("Bow Shoot: " + Time.time);
+    }
+
+    void ButtonPressed()
+    {
+        Debug.Log("Button Pressed: " + Time.time);
+    }
+
+    void ButtonReleased()
+    {
+        Debug.Log("Button Released: " + Time.time);
     }
 }

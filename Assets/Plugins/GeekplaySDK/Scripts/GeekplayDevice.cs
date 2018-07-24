@@ -67,6 +67,7 @@ public abstract class GeekplayDevice : MonoBehaviour
             service = service.Substring(4, 4).ToUpper();
 #endif
             //  等待所有服务开启后，就可以进行下一步（FFC0 和 FFF0）
+            //  TODO: 未完成
             if ("FFF0" == service)
             {
                 FFF0_enabled = true;
