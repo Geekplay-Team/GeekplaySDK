@@ -82,9 +82,12 @@ public abstract class GeekplayDevice : MonoBehaviour
             }
         }, null, (str) =>
         {
-            Debug.Log("Reconnecting :" + str);
-            connected = false;
-            Connect(str, () => { StartCoroutine(Subscribe(m_deviceID, "FFF0", "FFF8", MsgHandler)); });
+            if (isLegal)
+            {
+                Debug.Log("Reconnecting :" + str);
+                connected = false;
+                Connect(str, () => { StartCoroutine(Subscribe(m_deviceID, "FFF0", "FFF8", MsgHandler)); });
+            }
         });
     }
 
@@ -182,9 +185,9 @@ public abstract class GeekplayDevice : MonoBehaviour
         //  将 token 转发给硬件
         if (null != token)
         {
-            byte[] pack1 = null;
-            byte[] pack2 = null;
-            ParseToken(token, out pack1, out pack2);
+            //  将 token 分为两段并打包为固件可解析的格式
+            byte[] pack1 = Package(0xFD, token.Substring(0, 20));
+            byte[] pack2 = Package(0xFD, token.Substring(20, 20));
             SendToken(pack1, pack2);
         }
         //  等待硬件返回签名包
@@ -209,7 +212,7 @@ public abstract class GeekplayDevice : MonoBehaviour
         {
             pack[i] = (byte)UnityEngine.Random.Range(0, 255);
         }
-        return TokenPackage(GeekplayCommon.BytesToHexString(pack, ""));
+        return Package(0xFD, pack);
     }
 
     string signPack = null;
@@ -296,37 +299,40 @@ public abstract class GeekplayDevice : MonoBehaviour
 
         return GeekplayCommon.BytesToHexString(temp, ".");
     }
-
-    //  将分段后的 token 打包为数据包，准备发送，每段 token 为 10 字节
-    byte[] TokenPackage(string _tokenSubstring)
+    
+    protected byte[] Package(byte _cmdType, byte[] _cmd)
     {
-        byte[] package = new byte[14];
+        int length = _cmd.Length + 4;
+        byte[] package = new byte[length];
 
         package[0] = 0xFE;
-        package[1] = 0x0E;
-        package[2] = 0xFD;
+        package[1] = Convert.ToByte(length);
+        package[2] = _cmdType;
 
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < _cmd.Length; ++i)
         {
-            package[i + 3] = Convert.ToByte(_tokenSubstring.Substring(i * 2, 2), 16);
+            package[i + 3] = _cmd[i];
         }
-        package[13] = GetCheckSum(package);
+        package[length - 1] = GetCheckSum(package);
 
         return package;
     }
 
-    //  将 token 分为两段并打包为固件可解析的格式
-    void ParseToken(string s, out byte[] _pack1, out byte[] _pack2)
+    protected byte[] Package(byte _cmdType, string _cmd)
     {
-        string tokenSubstring1 = s.Substring(0, 20);
-        string tokenSubstring2 = s.Substring(20, 20);
+        int length = _cmd.Length / 2 + 4;
+        byte[] package = new byte[length];
+        package[2] = _cmdType;
 
-        _pack1 = new byte[14];
-        _pack2 = new byte[14];
-        _pack1 = TokenPackage(tokenSubstring1);
-        _pack2 = TokenPackage(tokenSubstring2);
+        for (int i = 0; i < _cmd.Length; ++i)
+        {
+            package[i + 3] = Convert.ToByte(_cmd.Substring(i * 2, 2), 16);
+        }
+        package[length - 1] = GetCheckSum(package);
+
+        return package;
     }
-
+    
     //  计算校验和
     byte GetCheckSum(byte[] dateByte)
     {

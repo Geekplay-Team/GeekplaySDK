@@ -31,6 +31,20 @@ public class GeekplayPoseidon : GeekplayDevice
         GunShootHandler = _shootHandler;
     }
 
+    //  _time:  0 - 25.5 秒，精度 0.1 秒
+    public void MotorRun(float _time)
+    {
+
+    }
+
+    //public void IR_SendMsg(byte _msg)
+    //{
+    //    BluetoothLEHardwareInterface.WriteCharacteristic(m_deviceID, "FFF0", "FFFA", _pack1, _pack1.Length, true, (createAction) =>
+    //    {
+    //        BluetoothLEHardwareInterface.WriteCharacteristic(m_deviceID, "FFF0", "FFFA", _pack2, _pack2.Length, true, null);
+    //    });
+    //}
+
     //  AR Gun 的消息处理函数
     bool lastTriggerDown = false;
     protected override void MsgHandler(byte[] _data)
