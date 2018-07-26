@@ -54,24 +54,8 @@ public class GeekplayElite : GeekplayDevice
         }
         lastTriggerDown = m_state.triggerDown;
 
-        //  25 - 7A - B0
-        if (_data[3] > 0x7A)
-        {
-            m_state.joyStickX = -(float)(_data[3] - 0x7A) / (0xB0 - 0x7A);
-        }
-        else
-        {
-            m_state.joyStickX = -(float)(_data[3] - 0x7A) / (0x7A - 0x25);
-        }
-
-        //  4D - 7B - C9
-        if (_data[2] > 0x7B)
-        {
-            m_state.joyStickY = (float)(_data[2] - 0x7B) / (0xC9 - 0x7B);
-        }
-        else
-        {
-            m_state.joyStickY = (float)(_data[2] - 0x7B) / (0x7B - 0x4D);
-        }
+        //  最小值：0x01    归中值：0x80    最大值：0xFF
+        m_state.joyStickX = (float)(_data[3] - 0x80) / 0x7F;
+        m_state.joyStickY = (float)(_data[2] - 0x80) / 0x7F;
     }
 }

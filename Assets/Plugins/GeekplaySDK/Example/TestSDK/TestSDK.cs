@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class TestSDK : MonoBehaviour
 {
+    GeekplayDevice m_device;
+
     void Start()
     {
         GeekplaySDK sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
@@ -19,7 +21,7 @@ public class TestSDK : MonoBehaviour
         }
         else if (typeof(GeekplayPoseidon) == _device.GetType())
         {
-            ((GeekplayPoseidon)_device).Initialize(GunShoot);
+            ((GeekplayPoseidon)_device).Initialize(GunShoot, GunPump);
         }
         else if (typeof(GeekplayHunter) == _device.GetType())
         {
@@ -29,17 +31,27 @@ public class TestSDK : MonoBehaviour
         {
             ((GeekplayDragonbone)_device).Initialize(BowDraw, BowShoot); 
         }
-        else
-        {
-            //  do nothing
-        }
+
+        m_device = _device;
     }
 
     void GunShoot()
     {
         Debug.Log("Gun Shoot: " + Time.time);
-        //Debug.Log("X: " + gun.GetState().joyStickX);
-        //Debug.Log("Y: " + gun.GetState().joyStickY);
+
+        if (typeof(GeekplayPoseidon) == m_device.GetType())
+        {
+            GeekplayPoseidon gun = (GeekplayPoseidon)m_device;
+            gun.MotorRun(0.3f);
+            gun.IR_SendMsg(0xCC);
+            Debug.Log("X: " + gun.GetState().joyStickX);
+            Debug.Log("Y: " + gun.GetState().joyStickY);
+        }
+    }
+
+    void GunPump()
+    {
+        Debug.Log("Gun Pump: " + Time.time);
     }
 
     void BowDraw()

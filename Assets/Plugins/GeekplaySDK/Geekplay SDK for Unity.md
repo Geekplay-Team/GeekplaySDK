@@ -6,13 +6,14 @@ This plugin provides basic access to Geekplay AR Gun, ARcher and AR Unit. You ca
 
 ## Version Changes
 
-| Version | Date       | Description                                         |
-| ------- | ---------- | --------------------------------------------------- |
-| 0.5.0   | 2018-07-20 | Added support for scanning multiple devices.        |
-| 0.4.0   | 2018-07-10 | Added new ARcher support.                           |
-| 0.3.0   | 2018-07-05 | Added local legitimacy verification.                |
-| 0.2.0   | 2018-06-22 | Added ARcher the Hunter(developer version) support. |
-| 0.1.0   | 2018-06-21 | Added AR Gun the Elite(developer version) support.  |
+| Version | Date       | Description                                           |
+| ------- | ---------- | ----------------------------------------------------- |
+| 0.6.0   | 2018-07-26 | Added AR Gun the Poseidon(developer version) support. |
+| 0.5.0   | 2018-07-20 | Added support for scanning multiple devices.          |
+| 0.4.0   | 2018-07-10 | Added new ARcher support.                             |
+| 0.3.0   | 2018-07-05 | Added local legitimacy verification.                  |
+| 0.2.0   | 2018-06-22 | Added ARcher the Hunter(developer version) support.   |
+| 0.1.0   | 2018-06-21 | Added AR Gun the Elite(developer version) support.    |
 
 ## Setup Guide
 

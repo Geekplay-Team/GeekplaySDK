@@ -152,7 +152,7 @@ public abstract class GeekplayDevice : MonoBehaviour
 
     string serverURL_request = "http://www.pluginx.cc/?m=sm&a=get_sm_msg";
     string serverURL_verify = "http://www.pluginx.cc/?m=sm&a=verify";
-    string sdk_version = "0.2.0";
+    string sdk_version = "0.6.0";
     string firmwareVersion = null;
     string hardwareVersion = null;
 
@@ -188,7 +188,8 @@ public abstract class GeekplayDevice : MonoBehaviour
             //  将 token 分为两段并打包为固件可解析的格式
             byte[] pack1 = Package(0xFD, token.Substring(0, 20));
             byte[] pack2 = Package(0xFD, token.Substring(20, 20));
-            SendToken(pack1, pack2);
+            WriteCharacteristic("FFF0", "FFFA", pack1);
+            WriteCharacteristic("FFF0", "FFFA", pack2);
         }
         //  等待硬件返回签名包
         yield return new WaitUntil(() => { return ((null != sign1) && (null != sign2)); });
@@ -228,7 +229,8 @@ public abstract class GeekplayDevice : MonoBehaviour
         //  将 token 发给硬件
         byte[] tokenPack1 = GenerateTokenPack();
         byte[] tokenPack2 = GenerateTokenPack();
-        SendToken(tokenPack1, tokenPack2);
+        WriteCharacteristic("FFF0", "FFFA", tokenPack1);
+        WriteCharacteristic("FFF0", "FFFA", tokenPack2);
 
         //  等待硬件返回签名包
         yield return new WaitUntil(() => { return (null != signPack); });
@@ -298,71 +300,6 @@ public abstract class GeekplayDevice : MonoBehaviour
         }
 
         return GeekplayCommon.BytesToHexString(temp, ".");
-    }
-    
-    protected byte[] Package(byte _cmdType, byte[] _cmd)
-    {
-        int length = _cmd.Length + 4;
-        byte[] package = new byte[length];
-
-        package[0] = 0xFE;
-        package[1] = Convert.ToByte(length);
-        package[2] = _cmdType;
-
-        for (int i = 0; i < _cmd.Length; ++i)
-        {
-            package[i + 3] = _cmd[i];
-        }
-        package[length - 1] = GetCheckSum(package);
-
-        return package;
-    }
-
-    protected byte[] Package(byte _cmdType, string _cmd)
-    {
-        int length = _cmd.Length / 2 + 4;
-        byte[] package = new byte[length];
-        package[2] = _cmdType;
-
-        for (int i = 0; i < _cmd.Length; ++i)
-        {
-            package[i + 3] = Convert.ToByte(_cmd.Substring(i * 2, 2), 16);
-        }
-        package[length - 1] = GetCheckSum(package);
-
-        return package;
-    }
-    
-    //  计算校验和
-    byte GetCheckSum(byte[] dateByte)
-    {
-        byte byteTemp;
-        int sum = 0;
-        for (int j = 0; j < dateByte.Length - 1; j++)
-        {
-            string str = dateByte[j].ToString("x");
-            sum += Convert.ToInt32(str, 16);
-        }
-        string sum16 = Convert.ToString(sum, 16);
-        int sum16Length = sum16.Length;
-        if (sum16Length >= 2)
-        {
-            byteTemp = (byte)Convert.ToInt32(sum16.Substring(sum16Length - 2), 16);
-        }
-        else
-        {
-            byteTemp = (byte)Convert.ToInt32((sum16), 16);
-        }
-
-        return byteTemp;
-    }
-
-    void SendToken(byte[] _pack1, byte[] _pack2)
-    {
-        BluetoothLEHardwareInterface.WriteCharacteristic(m_deviceID, "FFF0", "FFFA", _pack1, _pack1.Length, true, (createAction) =>
-        {
-            BluetoothLEHardwareInterface.WriteCharacteristic(m_deviceID, "FFF0", "FFFA", _pack2, _pack2.Length, true, null);
-        });
     }
 
     int signPackCount4Remote = 0;
@@ -448,4 +385,96 @@ public abstract class GeekplayDevice : MonoBehaviour
     }
 
     #endregion
+
+
+    #region 通信相关功能函数
+
+    protected byte[] Package(byte _cmdType, byte[] _cmd)
+    {
+        int length = _cmd.Length + 4;
+        byte[] package = new byte[length];
+
+        package[0] = 0xFE;
+        package[1] = Convert.ToByte(length);
+        package[2] = _cmdType;
+
+        for (int i = 0; i < _cmd.Length; ++i)
+        {
+            package[i + 3] = _cmd[i];
+        }
+        package[length - 1] = GetCheckSum(package);
+
+        return package;
+    }
+
+    protected byte[] Package(byte _cmdType, string _cmd)
+    {
+        int length = _cmd.Length / 2 + 4;
+        byte[] package = new byte[length];
+        package[2] = _cmdType;
+
+        for (int i = 0; i < _cmd.Length; ++i)
+        {
+            package[i + 3] = Convert.ToByte(_cmd.Substring(i * 2, 2), 16);
+        }
+        package[length - 1] = GetCheckSum(package);
+
+        return package;
+    }
+
+    //  计算校验和
+    byte GetCheckSum(byte[] dateByte)
+    {
+        byte byteTemp;
+        int sum = 0;
+        for (int j = 0; j < dateByte.Length - 1; j++)
+        {
+            string str = dateByte[j].ToString("x");
+            sum += Convert.ToInt32(str, 16);
+        }
+        string sum16 = Convert.ToString(sum, 16);
+        int sum16Length = sum16.Length;
+        if (sum16Length >= 2)
+        {
+            byteTemp = (byte)Convert.ToInt32(sum16.Substring(sum16Length - 2), 16);
+        }
+        else
+        {
+            byteTemp = (byte)Convert.ToInt32((sum16), 16);
+        }
+
+        return byteTemp;
+    }
+
+    
+    List<byte[]> msgToWrite = new List<byte[]>();
+    bool listSendComplete = true;
+    protected void WriteCharacteristic(string _service, string _characteristic, byte[] _data)
+    {
+        msgToWrite.Add(_data);
+        if (listSendComplete)
+        {
+            StartCoroutine(CoWriteCharacteristic(_service, _characteristic));
+        }
+    }
+
+    IEnumerator CoWriteCharacteristic(string _service, string _characteristic)
+    {
+        listSendComplete = false;
+        bool complete = true;
+        while (msgToWrite.Count > 0)
+        {
+            complete = false;
+            BluetoothLEHardwareInterface.WriteCharacteristic(m_deviceID, _service, _characteristic, msgToWrite[0], msgToWrite[0].Length, true, (str) =>
+            {
+                msgToWrite.RemoveAt(0);
+                complete = true;
+            });
+            yield return new WaitUntil(() => complete);
+        }
+        listSendComplete = true;
+    }
+
+    #endregion
+
 }
