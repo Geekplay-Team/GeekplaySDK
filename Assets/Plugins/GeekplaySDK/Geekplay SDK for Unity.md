@@ -31,6 +31,8 @@ using UnityEngine;
 
 public class TestSDK : MonoBehaviour
 {
+    GeekplayDevice m_device;
+
     void Start()
     {
         GeekplaySDK sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
@@ -40,29 +42,43 @@ public class TestSDK : MonoBehaviour
     void RegisterCallbacks(GeekplayDevice _device)
     {
         Debug.Log(_device.GetType());
-        if (typeof(GeekplayARGun) == _device.GetType())
+        if (typeof(GeekplayElite) == _device.GetType())
         {
-            ((GeekplayARGun)_device).Initialize(GunShoot);
+            ((GeekplayElite)_device).Initialize(GunShoot);
         }
-        else if (typeof(GeekplayARcher) == _device.GetType())
+        else if (typeof(GeekplayPoseidon) == _device.GetType())
         {
-            ((GeekplayARcher)_device).Initialize(BowDraw, BowShoot, null, null);
+            ((GeekplayPoseidon)_device).Initialize(GunShoot, GunPump);
         }
-        else if (typeof(GeekplayNewARcher) == _device.GetType())
+        else if (typeof(GeekplayHunter) == _device.GetType())
         {
-            ((GeekplayNewARcher)_device).Initialize(BowDraw, BowShoot); 
+            ((GeekplayHunter)_device).Initialize(BowDraw, BowShoot, ButtonPressed, ButtonReleased);
         }
-        else
+        else if (typeof(GeekplayDragonbone) == _device.GetType())
         {
-            //  do nothing
+            ((GeekplayDragonbone)_device).Initialize(BowDraw, BowShoot); 
         }
+
+        m_device = _device;
     }
 
     void GunShoot()
     {
         Debug.Log("Gun Shoot: " + Time.time);
-        //Debug.Log("X: " + gun.GetState().joyStickX);
-        //Debug.Log("Y: " + gun.GetState().joyStickY);
+
+        if (typeof(GeekplayPoseidon) == m_device.GetType())
+        {
+            GeekplayPoseidon gun = (GeekplayPoseidon)m_device;
+            gun.MotorRun(0.3f);
+            gun.IR_SendMsg(0xCC);
+            Debug.Log("X: " + gun.GetState().joyStickX);
+            Debug.Log("Y: " + gun.GetState().joyStickY);
+        }
+    }
+
+    void GunPump()
+    {
+        Debug.Log("Gun Pump: " + Time.time);
     }
 
     void BowDraw()
@@ -74,12 +90,22 @@ public class TestSDK : MonoBehaviour
     {
         Debug.Log("Bow Shoot: " + Time.time);
     }
+
+    void ButtonPressed()
+    {
+        Debug.Log("Button Pressed: " + Time.time);
+    }
+
+    void ButtonReleased()
+    {
+        Debug.Log("Button Released: " + Time.time);
+    }
 }
 ```
 
 ## Support
 
-email: info@geekplay.cc
+email: support@geekplay.cc
 
 ## API Reference
 
@@ -96,18 +122,18 @@ delegate void RegisterCallback(GeekplayDevice _device);
 void StartSDK(RegisterCallback _register);
 ```
 
-### GeekplayARGun : GeekplayDevice
+### GeekplayElite : GeekplayDevice
 
 ```c#
 //	Initialize AR Gun. When initialized, _complete callback will be executed. 
 //	When you pull the trigger, _shootHandler callback will be executed.
 void Initialize(Action _shootHandler = null, Action _complete = null);
 
-//	data of AR Gun
+//	data of AR Gun the Elite
 //	triggerDown: true ~ trigger down, false ~ trigger up
 //	joyStickX:   0.0 ~ middle, 1.0 ~ up, -1.0 ~ down
 //	joyStickY:   0.0 ~ middle, 1.0 ~ right, -1.0 ~ left
-class AR_Gun
+class EliteState
 {
     public bool triggerDown = false;
     public float joyStickX = 0.0f;
@@ -115,10 +141,10 @@ class AR_Gun
 }
 
 //	Get the data of trigger and joystick
-ARGunState GetState();
+EliteState GetState();
 ```
 
-### GeekplayARcher : GeekplayDevice
+### GeekplayHunter : GeekplayDevice
 
 ```c#
 //	Initialize ARcher the Hunter. When initialized, _complete callback will be executed. 
@@ -131,17 +157,17 @@ void Initialize(Action _drawHandler = null, Action _shootHandler = null, Action 
 //	data of ARcher the Hunter
 //	stringPulled:  true ~ string pulled, false ~ string released
 //	buttonPressed: true ~ button pressed, false ~ button released
-class ARcher
+class HunterState
 {
     public bool stringPulled = false;
     public bool buttonPressed = false;
 }
 
 //	Get the data of string and button
-ARcherState GetState();
+HunterState GetState();
 ```
 
-### GeekplayNewARcher : GeekplayDevice
+### GeekplayDragonbone : GeekplayDevice
 
 ```c#
 //	Initialize ARcher the Dragonbone. When initialized, _complete callback will be executed.
@@ -153,8 +179,7 @@ void Initialize(Action _drawHandler = null, Action _shootHandler = null, Action 
 //	stringPulled:   true ~ string pulled, false ~ string released
 //	drawLength:	    current draw length
 //	fullDrawLength: full draw length of a normal adult
-
-class NewARcherState
+class DragonboneState
 {
     public bool stringPulled = false;
     public int drawLength = 0;
@@ -162,6 +187,42 @@ class NewARcherState
 }
 
 //	Get the data of the bow
-ARcherState GetState();
+DragonboneState GetState();
+```
+
+### GeekplayPoseidon : GeekplayDevice
+
+```C#
+//	Initialize AR Gun the Poseidon. When initialized, _complete callback will be executed.
+//	When you pull the trigger, _shootHandler callback will be executed.
+//	When you pump(reload ammo), _pumpHandler callback will be executed.
+void Initialize(Action _shootHandler = null, Action _pumpHandler = null, Action _complete = null);
+
+//	After initialized, if you want to change the callbacks, you can call this method.
+void RegisterCallback(Action _shootHandler, Action _pumpHandler)；
+
+//	data of AR Gun the Poseidon
+//	triggerDown: true ~ trigger down, false ~ trigger up
+//	pumped:		true ~ pumped, false ~ default state
+//	joyStickX:   0.0 ~ middle, 1.0 ~ up, -1.0 ~ down
+//	joyStickY:   0.0 ~ middle, 1.0 ~ right, -1.0 ~ left
+public class PoseidonState
+{
+    public bool triggerDown = false;
+    public bool pumped = false;
+    public float joyStickX = 0.0f;
+    public float joyStickY = 0.0f;
+}
+
+//	Get the data of the gun
+PoseidonState GetState();
+
+//	Motor vibrate
+//	_time:	vibration time（0-25s, with the resolution of 0.1s）
+void MotorRun(float _time);
+
+//	Send message through IR
+//	_msg:	data to send(one byte)
+void IR_SendMsg(byte _msg);
 ```
 

@@ -31,6 +31,8 @@ using UnityEngine;
 
 public class TestSDK : MonoBehaviour
 {
+    GeekplayDevice m_device;
+
     void Start()
     {
         GeekplaySDK sdk = GameObject.Find("GeekplaySDK").GetComponent<GeekplaySDK>();
@@ -40,29 +42,43 @@ public class TestSDK : MonoBehaviour
     void RegisterCallbacks(GeekplayDevice _device)
     {
         Debug.Log(_device.GetType());
-        if (typeof(GeekplayARGun) == _device.GetType())
+        if (typeof(GeekplayElite) == _device.GetType())
         {
-            ((GeekplayARGun)_device).Initialize(GunShoot);
+            ((GeekplayElite)_device).Initialize(GunShoot);
         }
-        else if (typeof(GeekplayARcher) == _device.GetType())
+        else if (typeof(GeekplayPoseidon) == _device.GetType())
         {
-            ((GeekplayARcher)_device).Initialize(BowDraw, BowShoot, null, null);
+            ((GeekplayPoseidon)_device).Initialize(GunShoot, GunPump);
         }
-        else if (typeof(GeekplayNewARcher) == _device.GetType())
+        else if (typeof(GeekplayHunter) == _device.GetType())
         {
-            ((GeekplayNewARcher)_device).Initialize(BowDraw, BowShoot); 
+            ((GeekplayHunter)_device).Initialize(BowDraw, BowShoot, ButtonPressed, ButtonReleased);
         }
-        else
+        else if (typeof(GeekplayDragonbone) == _device.GetType())
         {
-            //  do nothing
+            ((GeekplayDragonbone)_device).Initialize(BowDraw, BowShoot); 
         }
+
+        m_device = _device;
     }
 
     void GunShoot()
     {
         Debug.Log("Gun Shoot: " + Time.time);
-        //Debug.Log("X: " + gun.GetState().joyStickX);
-        //Debug.Log("Y: " + gun.GetState().joyStickY);
+
+        if (typeof(GeekplayPoseidon) == m_device.GetType())
+        {
+            GeekplayPoseidon gun = (GeekplayPoseidon)m_device;
+            gun.MotorRun(0.3f);
+            gun.IR_SendMsg(0xCC);
+            Debug.Log("X: " + gun.GetState().joyStickX);
+            Debug.Log("Y: " + gun.GetState().joyStickY);
+        }
+    }
+
+    void GunPump()
+    {
+        Debug.Log("Gun Pump: " + Time.time);
     }
 
     void BowDraw()
@@ -74,12 +90,22 @@ public class TestSDK : MonoBehaviour
     {
         Debug.Log("Bow Shoot: " + Time.time);
     }
+
+    void ButtonPressed()
+    {
+        Debug.Log("Button Pressed: " + Time.time);
+    }
+
+    void ButtonReleased()
+    {
+        Debug.Log("Button Released: " + Time.time);
+    }
 }
 ```
 
 ## 技术支持
 
-email: info@geekplay.cc
+email: support@geekplay.cc
 
 ## API 说明
 
@@ -96,18 +122,18 @@ delegate void RegisterCallback(GeekplayDevice _device);
 void StartSDK(RegisterCallback _register);
 ```
 
-### GeekplayARGun : GeekplayDevice
+### GeekplayElite : GeekplayDevice
 
 ```c#
 //	初始化 AR Gun，完成后 _complete 会被回调。
 //	扣动扳机时，_shootHandler 会被回调。
 void Initialize(Action _shootHandler = null, Action _complete = null);
 
-//	AR Gun 的相关数据
+//	AR Gun 精锐的相关数据
 //	triggerDown: true ~ 扳机被按下, false ~ 扳机未按下
 //	joyStickX:   0.0 ~ 中央, 1.0 ~ 向上, -1.0 ~ 乡下
 //	joyStickY:   0.0 ~ 中央, 1.0 ~ 向右, -1.0 ~ 向左
-class AR_Gun
+class EliteState
 {
     public bool triggerDown = false;
     public float joyStickX = 0.0f;
@@ -115,10 +141,10 @@ class AR_Gun
 }
 
 //	获取扳机与摇杆的当前状态
-ARGunState GetState();
+EliteState GetState();
 ```
 
-### GeekplayARcher : GeekplayDevice
+### GeekplayHunter : GeekplayDevice
 
 ```c#
 //	初始化 ARcher（狩猎者），完成后 _complete 会被回调。
@@ -131,17 +157,17 @@ void Initialize(Action _drawHandler = null, Action _shootHandler = null, Action 
 //	ARcher（狩猎者）的相关数据
 //	stringPulled:  true ~ 弓弦被拉开, false ~ 弓弦被释放
 //	buttonPressed: true ~ 按钮被按下, false ~ 按钮被松开
-class ARcher
+class HunterState
 {
     public bool stringPulled = false;
     public bool buttonPressed = false;
 }
 
 //	获取弓弦与按钮的当前状态
-ARcherState GetState();
+HunterState GetState();
 ```
 
-### GeekplayNewARcher : GeekplayDevice
+### GeekplayDragonbone : GeekplayDevice
 
 ```c#
 //	初始化 ARcher（龙骨），完成后 _complete 会被回调。
@@ -153,7 +179,7 @@ void Initialize(Action _drawHandler = null, Action _shootHandler = null, Action 
 //	stringPulled:   true ~ 弓弦被拉开, false ~ 弓弦被释放
 //	drawLength:     弓弦被拉开的距离
 //	fullDrawLength: 普通成年人的满幅拉距
-class NewARcherState
+class DragonboneState
 {
     public bool stringPulled = false;
     public int drawLength = 0;
@@ -161,6 +187,42 @@ class NewARcherState
 }
 
 //	获取弓的当前状态
-ARcherState GetState();
+DragonboneState GetState();
+```
+
+### GeekplayPoseidon : GeekplayDevice
+
+```c#
+//	初始化 AR Gun 波塞冬，完成后 _complete 会被回调。
+//	扣动扳机时，_shootHandler 会被回调。
+//	泵动（装填子弹）时，_pumpHandler 会被回调。
+void Initialize(Action _shootHandler = null, Action _pumpHandler = null, Action _complete = null);
+
+//	在初始化之后，如果需要修改回调的注册，可用本方法
+void RegisterCallback(Action _shootHandler, Action _pumpHandler)；
+
+//	AR Gun（波塞冬）的相关数据
+//	triggerDown: true ~ 扳机被按下, false ~ 扳机未按下
+//	pumped:		true ~ 向后拉的状态, false ~ 默认状态
+//	joyStickX:   0.0 ~ 中央, 1.0 ~ 向上, -1.0 ~ 乡下
+//	joyStickY:   0.0 ~ 中央, 1.0 ~ 向右, -1.0 ~ 向左
+public class PoseidonState
+{
+    public bool triggerDown = false;
+    public bool pumped = false;
+    public float joyStickX = 0.0f;
+    public float joyStickY = 0.0f;
+}
+
+//	获取枪的当前状态
+PoseidonState GetState();
+
+//	马达振动
+//	_time:	振动时间（0-25 秒，精度 0.1 秒）
+void MotorRun(float _time);
+
+//	红外发送数据
+//	_msg:	需要发送的数据
+void IR_SendMsg(byte _msg);
 ```
 
