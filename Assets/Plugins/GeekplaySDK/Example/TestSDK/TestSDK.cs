@@ -5,6 +5,8 @@ using UnityEngine;
 public class TestSDK : MonoBehaviour
 {
     GeekplayDevice m_device;
+    public Camera m_camera;
+    public Transform m_cameraOrigin;
 
     void Start()
     {
@@ -30,6 +32,10 @@ public class TestSDK : MonoBehaviour
         else if (typeof(GeekplayDragonbone) == _device.GetType())
         {
             ((GeekplayDragonbone)_device).Initialize(BowDraw, BowShoot); 
+        }
+        else if (typeof(GeekplayMR_Camera) == _device.GetType())
+        {
+            ((GeekplayMR_Camera)_device).Initialize(m_camera, new Vector3(0, 0, 0));
         }
 
         m_device = _device;

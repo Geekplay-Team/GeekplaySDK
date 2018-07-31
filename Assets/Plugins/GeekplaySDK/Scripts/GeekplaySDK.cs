@@ -11,7 +11,8 @@ public enum DeviceName
     Elite, 
     Poseidon, 
     Hunter, 
-    Dragonbone
+    Dragonbone, 
+    MR_Camera
 }
 
 public class GeekplaySDK : MonoBehaviour
@@ -23,7 +24,11 @@ public class GeekplaySDK : MonoBehaviour
         { DeviceName.Poseidon, new string[] { "GU-AHEAD" } }, 
         { DeviceName.Hunter, new string[]{ "GU-ARCHER" } },
         { DeviceName.Dragonbone, new string[]{ "R-ARCHER" } },
+        { DeviceName.MR_Camera, new string[]{ "GU-CAMERA" } }, 
     };
+
+    //public bool m_enableMR_Camera = false;
+    //public Camera MR_Camera = null;
 
     public DeviceName[] m_supportedDevices;
     GeekplayDevice m_device = null;
@@ -135,6 +140,8 @@ public class GeekplaySDK : MonoBehaviour
                 return gameObject.AddComponent<GeekplayHunter>();
             case DeviceName.Dragonbone:
                 return gameObject.AddComponent<GeekplayDragonbone>();
+            case DeviceName.MR_Camera:
+                return gameObject.AddComponent<GeekplayMR_Camera>();
             default:
                 return gameObject.AddComponent<GeekplayDevice>();
         }

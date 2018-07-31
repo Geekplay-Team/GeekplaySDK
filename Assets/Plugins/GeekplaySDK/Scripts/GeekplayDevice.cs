@@ -34,8 +34,11 @@ public abstract class GeekplayDevice : MonoBehaviour
         {
             Connect(_deviceID);
             yield return new WaitUntil(() => connected);
-            yield return StartCoroutine(CoVerifyDevice());
-            yield return new WaitUntil(() => isLegal);
+            //yield return StartCoroutine(CoVerifyDevice());
+            //yield return new WaitUntil(() => isLegal);
+            isLegal = true;
+            yield return new WaitForSeconds(0.5f);
+            Debug.Log("m_deviceID: " + m_deviceID);
             //  订阅控制通道
             yield return StartCoroutine(Subscribe(m_deviceID, "FFF0", "FFF8", MsgHandler));
             gameObject.GetComponent<AudioSource>().Play();
@@ -76,7 +79,7 @@ public abstract class GeekplayDevice : MonoBehaviour
             {
                 FFC0_enabled = true;
             }
-            if (FFC0_enabled && FFF0_enabled)
+            if (FFC0_enabled || FFF0_enabled)
             {
                 connected = true;
             }
@@ -84,7 +87,7 @@ public abstract class GeekplayDevice : MonoBehaviour
         {
             if (isLegal)
             {
-                Debug.Log("Reconnecting :" + str);
+                Debug.Log("Reconnecting: " + str);
                 connected = false;
                 Connect(str, () => { StartCoroutine(Subscribe(m_deviceID, "FFF0", "FFF8", MsgHandler)); });
             }
